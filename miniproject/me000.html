@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to Me</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@600&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Prompt', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #251a0ec5, #2b2107);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      display: flex;
+      gap: 10px;
+    }
+
+    span {
+      font-size: 100px;
+      color: #fff;
+      text-transform: uppercase;
+      display: inline-block;
+      position: relative;
+      animation: bounce 1s ease-in-out infinite;
+    }
+
+    h1 span:nth-child(1) { animation-delay: 0s; }
+    h1 span:nth-child(2) { animation-delay: 0.1s; }
+    h1 span:nth-child(3) { animation-delay: 0.2s; }
+    h1 span:nth-child(4) { animation-delay: 0.3s; }
+    h1 span:nth-child(5) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+        text-shadow: none;
+      }
+      50% {
+        transform: translateY(-25px);
+        text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+    }
+
+    p {
+      margin-top: 30px;
+      color: #757261;
+      font-size: 24px;
+      animation: fadeIn 1s ease 1.2s both;
+    }
+
+    .nav-buttons {
+      margin-top: 30px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeIn 1s ease forwards;
+    }
+
+    /* กลุ่มปุ่มแรก delay 2s */
+    .buttons-group-1 {
+      animation-delay: 2s;
+    }
+
+    /* กลุ่มปุ่มสอง delay 2.5s */
+    .buttons-group-2 {
+      animation-delay: 2.5s;
+    }
+
+    .nav-buttons a {
+      padding: 10px 20px;
+      background-color: #887c65;
+      color: #000;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .nav-buttons a:hover {
+      background-color: #6e695f;
+      transform: translateY(-3px);
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: #fff;
+      opacity: 0.6;
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    footer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  font-size: 14px;
+  color: #fff;
+  opacity: 0.6;
+  text-align: right;
+}
+/* ========== CSS สำหรับ POPUP ========== */
+#popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85); /* ทำให้พื้นหลังมืดลง */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  animation: fadeIn 0.5s ease;
+}
+
+#popup-content {
+  background-color: #ffffff; /* พื้นหลังสีขาว */
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  position: relative;
+  width: 90%;
+  max-width: 650px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  border-top: 10px solid #4a4a4a; /* ขอบบนสีเทาเข้ม */
+}
+
+#popup-content img {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+}
+
+#popup-content h2 {
+  color: #111;
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+/* Overwrite สไตล์ p ปกติ */
+#popup-content p {
+  color: #333;
+  font-size: 16px;
+  margin-top: 10px;
+  animation: none; /* ไม่ต้องมี animation */
+}
+
+#close-popup {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 30px;
+  font-weight: bold;
+  color: #aaa;
+  cursor: pointer;
+  transition: color 0.3s;
+  line-height: 1;
+}
+
+#close-popup:hover {
+  color: #000;
+}
+/* ======================================= */
+/* ========== CSS สำหรับหน้า LOGIN ========== */
+
+/* นี่คือ div ที่จะ "ห่อ" เนื้อหาเว็บหลักทั้งหมดของคุณ 
+  เราจะซ่อนมันไว้ในตอนแรก 
+*/
+#main-content {
+  display: none; /* <-- ซ่อนเนื้อหาเว็บไว้ก่อน */
+  
+  /* เราต้องย้าย flex-box ที่เคยอยู่บน <body> มาไว้ตรงนี้
+    เพื่อให้เนื้อหา "HELLO" ของคุณยังอยู่ตรงกลางเหมือนเดิม 
+  */
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* นี่คือกล่อง Login ที่จะแสดงผลในตอนแรก
+  (body ของคุณจะจัดมันให้อยู่ตรงกลางเอง)
+*/
+#login-box {
+  background-color: #ffffff;
+  padding: 30px 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  text-align: left;
+  border-top: 8px solid #887c65;
+}
+
+#login-box h2 {
+  color: #111;
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 28px;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-size: 16px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-family: 'Prompt', sans-serif; /* ใช้ฟอนต์เดียวกับเว็บ */
+}
+
+#login-box button {
+  width: 100%;
+  padding: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  background-color: #887c65;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+#login-box button:hover {
+  background-color: #6e695f;
+}
+
+/* สไตล์สำหรับแสดงข้อความ Error
+  เราจะใช้ JavaScript ควบคุมมัน
+*/
+#error-message {
+  color: #D8000C; /* สีแดง */
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  display: none; /* ซ่อนไว้ก่อน */
+}
+
+/* ======================================= */
+
+  </style>
+</head>
+<body>
+
+  <div id="popup-overlay">
+    <div id="popup-content">
+      <span id="close-popup">&times;</span>
+      
+      <img src="พระพันปี.jpg" alt="น้อมรำลึกในพระมหากรุณาธิคุณ">
+      
+      <h2>น้อมรำลึกในพระมหากรุณาธิคุณ</h2>
+      <p style="font-size: 18px;">
+        สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ<br>พระบรมราชชนนีพันปีหลวง
+      </p>
+      <p style="margin-top: 20px; font-size: 14px;">ด้วยเกล้าด้วยกระหม่อม ขอเดชะ</p>
+    </div>
+  </div> <h1>
+    <span>H</span>
+    <span>E</span>
+    <span>L</span>
+    <span>L</span>
+    <span>O</span>
+  </h1>
+
+  <p>Welcome to my website</p>
+
+  <div class="nav-buttons buttons-group-1">
+    <nav>
+      <a href="me000.html">🏠 HOME</a>
+      <a href="me00.html">🙋‍♀️ ALL ME</a>
+      <a href="me01.html">🌍 WHAT IS GEOGRAPHY?</a>
+      <a href="me02.html">🧠 CHANGING THINKING</a>
+      <a href="webmap00.html">🗺️ AGI STUDENT</a>
+      <a href="trip.html">🏞️ HIKING MAPS</a>
+      <a href="miniprojcet.html">🛰️ ALL MAPS</a>
+    </nav>
+  </div>
+
+  <footer>
+    © 2025 Kwankhao Songma | สร้างด้วย ❤️ และกาแฟ
+  </footer>
+
+  <script>
+    const popupOverlay = document.getElementById('popup-overlay');
+    const closePopupButton = document.getElementById('close-popup');
+    function closePopup() {
+      popupOverlay.style.display = 'none';
+    }
+    closePopupButton.onclick = closePopup;
+    popupOverlay.onclick = function(event) {
+      if (event.target == popupOverlay) {
+        closePopup();
+      }
+    }
+  </script>
+
+</body>
+</html>

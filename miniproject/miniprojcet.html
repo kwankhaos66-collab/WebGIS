@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integrated Web GIS Project (Earth-Tone Theme)</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* [ADDED] 3. CSS Variables (Colors) from trip.html */
+:root {
+    --color-primary: #633f17; 
+    --color-secondary: #a89c82; 
+    --color-accent: #b8860b; 
+    --color-bg: #f5f0e9; 
+    --color-text: #685e4e; 
+    --color-border: #d4c1a0; 
+    --color-white: #ffffff;
+    --color-brown-text: #4e4437;
+}
+
+/* [CHANGED] 4. Body styles from trip.html */
+body { 
+    font-family: 'Prompt', sans-serif; 
+    text-align: center; 
+    background: linear-gradient(135deg, var(--color-bg), #e6e0d9); 
+    color: var(--color-text); 
+    padding-bottom: 50px; 
+    padding-top: 80px; /* Added padding for fixed nav */
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* [CHANGED] 5. Headings styles from trip.html */
+h1 { 
+    color: var(--color-primary); 
+    margin-top: 25px; 
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 2.2em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+}
+.note { /* Replaces h4 */
+    color: #6a6a6a; 
+    font-size: 1.1em; 
+    margin-bottom: 25px; 
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* [CHANGED] 6. Map Container style from trip.html */
+#map { 
+    height: 750px; /* Kept original height */
+    width: 92%; /* Changed width */
+    margin: 0 auto; 
+    border: 2px solid var(--color-border); 
+    border-radius: 15px; 
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); 
+    z-index: 1; 
+}
+
+/* [CHANGED] 7. Info Box (Top-Left) adapted to new theme */
+.info {
+    padding: 10px 12px;
+    background: var(--color-bg);
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    color: var(--color-text);
+    font-weight: 500;
+    line-height: 1.4em;
+    border: 1px solid var(--color-border);
+}
+.info h4 {
+    margin: 0 0 5px 0;
+    color: var(--color-primary);
+}
+
+/* [CHANGED] 8. Popup styles from trip.html */
+.leaflet-popup-content-wrapper {
+    background: var(--color-bg);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    color: var(--color-text);
+}
+.leaflet-popup-tip {
+    background: var(--color-bg);
+}
+.leaflet-popup-content h3 {
+    color: var(--color-primary);
+    margin: 5px 0 10px 0;
+    padding-bottom: 5px;
+    border-bottom: 2px solid var(--color-border);
+    font-size: 1.4em;
+    font-weight: 600;
+}
+.leaflet-popup-content h4 { 
+    margin: 12px 0 6px 0; 
+    color: var(--color-text); 
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+/* --- 9. Custom Marker Styles (Rainfall) - Unchanged --- */
+.num-marker {
+    width: 50px; 
+    height: 50px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: bold;
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* [CHANGED] 10. Legend Styles from trip.html */
+.legend { 
+    line-height: 25px; 
+    color: var(--color-brown-text); 
+    background: rgba(255, 255, 255, 0.95); 
+    padding: 15px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+    border: 1px solid var(--color-border); 
+}
+.legend h4 { 
+    color: var(--color-primary); 
+    margin-top: 0; 
+    margin-bottom: 10px; 
+    font-size: 1.15em; 
+    font-weight: 600; 
+}
+.legend i { 
+    width: 20px; height: 20px; 
+    float: left; margin-right: 10px; 
+    opacity: 0.95; border-radius: 50%; 
+    border: 1px solid rgba(0,0,0,0.1); 
+}
+
+/* Custom Spacing for Left Legends (stacks vertically) */
+.leaflet-bottom.leaflet-left > div:not(:last-child) {
+    margin-bottom: 10px; 
+}
+
+
+/* [CHANGED] 11. Input & Button styles (removed Pastel) */
+/* (We will use the popup-specific styles from trip.html if needed) */
+/* This section is now empty as trip.html styles buttons inside popups */
+
+
+/* [CHANGED] 12. Layer Control adapted to new theme */
+.leaflet-control-layers {
+    background: var(--color-bg);
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    padding: 8px;
+    border: 1px solid var(--color-border);
+}
+.leaflet-control-layers-toggle {
+    background: var(--color-border) !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--color-primary) !important;
+}
+
+/* [ADDED] 13. Navbar styles from trip.html */
+nav { 
+    position: fixed; top: 0; left: 0; width: 100%; 
+    display: flex; justify-content: center; gap: 30px; 
+    padding: 15px 0; 
+    background: rgba(66, 48, 14, 0.863); /* Brown bg */
+    backdrop-filter: blur(8px); z-index: 999; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+}
+nav a { 
+    color: #fff; text-decoration: none; 
+    font-size: 15px; padding: 10px 18px; 
+    border-radius: 25px; transition: 0.3s ease; 
+    font-weight: 500; 
+}
+nav a:hover { 
+    background: #d4c1a0; color: #3e2f1f; 
+}
+@media (max-width: 768px) { 
+    nav { flex-wrap: wrap; gap: 10px; padding: 10px 5px; } 
+    nav a { font-size: 14px; padding: 8px 14px; } 
+}
+
+</style>
+</head>
+<body>
+
+<nav>
+    <a href="me000.html">🏠 HOME</a>
+    <a href="me00.html">🙋‍♀️ ALL ME</a>
+    <a href="me01.html">🌍 WHAT IS GEOGRAPHY?</a>
+    <a href="me02.html">🧠 CHANGING THINKING</a>
+    <a href="webmap00.html">🗺️ AGI STUDENT</a>
+    <a href="trip.html">🏞️ HIKING MAPS</a>
+    <a href="miniprojcet.html">🛰️ ALL MAPS</a>
+</nav>
+
+<h1>🗺️ Integrated Web GIS Project 🌲</h1>
+<p class="note">ขวัญข้าว สงมา 66340759 + WMS & API Data</p>
+
+<div id="map"></div>
+
+<script>
+// --- 1. Map Initialization ---
+var map = L.map("map").setView([17.3, 100.2], 9); 
+
+// --- 2. Base Layers ---
+var google_map = L.tileLayer("https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}", { maxZoom: 18 }).addTo(map);
+var openstreetmap = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 });
+var EsriWorldStreetMap = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", { maxZoom: 18 });
+var EsriWorldImagery = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 18 });
+var googleHybrid = L.tileLayer("https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}", { maxZoom: 20, subdomains: ["mt0", "mt1", "mt2", "mt3"] });
+var googleSat = L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", { maxZoom: 20, subdomains: ["mt0", "mt1", "mt2", "mt3"] });
+var Darklayar = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { attribution: "&copy; CartoDB" });
+var cartoLight = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { attribution: "&copy; CartoDB", subdomains: "abcd", maxZoom: 19 });
+var Stadia_StamenWatercolor = L.tileLayer("https://tiles.stadiamaps.com/tiles/stadiamaps_stamen_watercolor/{z}/{x}/{y}.{ext}", { minZoom: 1, maxZoom: 16, attribution: '&copy; <a href="https://www.stadiamaps.com/">Stadia</a> &copy; <a href="https://www.stamen.com/">Stamen</a>', ext: "jpg" });
+
+// --- 3. GeoJSON Styling & Interaction Functions ---
+function getColor(area) {
+    // Adapted colors to fit the new brown theme slightly
+    return area > 12699300000 ? '#a56c42' :
+           area > 9880600000 ? '#b8860b' :
+           area > 6864500000 ? '#d4a26a' :
+           area > 5634800000 ? '#a89c82' :
+           area > 4491200000 ? '#d4c1a0' :
+           area > 3488100000 ? '#f5f0e9' :
+           area > 197600000 ? '#faf8f5' :
+           '#ffffff';
+}
+
+function style(feature) {
+    var colorFill = feature.properties && feature.properties.area ? getColor(feature.properties.area) : "#d4c1a0";
+    if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+        return { fillColor: colorFill, weight: 2, color: 'var(--color-primary)', dashArray: '5', fillOpacity: 0.7, opacity: 1 };
+    } else if (feature.geometry.type === "LineString" || feature.geometry.type === "MultiLineString") {
+        return { color: colorFill, weight: 4, dashArray: '5', opacity: 1 };
+    } else if (feature.geometry.type === "Point") {
+        return { color: "var(--color-accent)" };
+    }
+}
+
+function highlightFeature(e) {
+    var layer = e.target;
+    layer.setStyle({ weight: 5, color: '#fff', dashArray: '', fillOpacity: 0.9 });
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) { layer.bringToFront(); }
+    info.update(layer.feature.properties);
+}
+function resetHighlight(e) { 
+    if(e.target.feature.properties.prov_nam_t) {
+        ThaiProvJSON.resetStyle(e.target);
+    } else if (e.target.feature.properties.prov_nam_t) {
+        jsonProv.resetStyle(e.target);
+    }
+    info.update(); 
+}
+function zoomToFeature(e) { map.fitBounds(e.target.getBounds()); }
+function onEachFeature(feature, layer) {
+    layer.bindPopup('<b>จังหวัด: ' + (feature.properties.prov_nam_t || feature.properties.name || 'พื้นที่') + '</b>');
+    layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: zoomToFeature });
+}
+
+// --- Info Box ---
+var info = L.control({ position: 'topleft' });
+info.onAdd = function (map) {
+    this._div = L.DomUtil.create('div', 'info');
+    this.update();
+    return this._div;
+};
+info.update = function (props) {
+    this._div.innerHTML = '<h4>แผนที่แสดงข้อมูล</h4>' + (props ? '<b><center>ขอบเขตของ ' + (props.prov_nam_t || props.name || 'พื้นที่') + '</center></b>' : 'เลื่อนเมาส์บนจังหวัด');
+};
+info.addTo(map);
+
+// --- 4. API Data Color & Icon Functions ---
+function rainColor(mm) {
+    if (!isFinite(mm) || mm <= 0) return "#31a354"; 
+    return mm > 150 ? "#800026" :
+           mm > 100 ? "#bd0026" :
+           mm > 70 ? "#e34a33" :
+           mm > 50 ? "#fd8d3c" :
+           mm > 30 ? "#fdae6b" :
+           mm > 10 ? "#ffff99" :
+           "#31a354";
+}
+function getWaterlevelColor(l) {
+    return l === 5 ? '#dc3545' : l === 4 ? '#ffc107' : l === 3 ? '#28a745' : '#6c757d';
+}
+
+function createWaterlevelIcon(level, value) {
+    let color = getWaterlevelColor(level);
+    return L.divIcon({
+        className: 'waterlevel-cloud',
+        html: `<div style="
+            width:40px; height:24px;
+            background:${color};
+            border-radius:50%;
+            display:flex; justify-content:center; align-items:center;
+            color:#fff; font-weight:bold;
+        ">${value !== null && isFinite(parseFloat(value)) ? parseFloat(value).toFixed(2) : '-'}</div>`,
+        iconSize: [40, 24], iconAnchor: [20, 12], popupAnchor: [0, -12]
+    });
+}
+
+function numberMarker(lat, lng, mm, popupHtml) {
+    var mmNum = isFinite(mm) ? mm : 0;
+    var displayValue = mmNum.toFixed(2); 
+    if (mmNum < 0.01) displayValue = '0';
+    
+    var bg = rainColor(mmNum);
+    var pulseClass = mmNum >= 100 ? 'pulse' : '';
+    
+    var html = `<div class="num-marker ${pulseClass}" style="background:${bg}">${displayValue}</div>`;
+    
+    return L.marker([lat, lng], {
+        icon: L.divIcon({
+            className: "", 
+            html: html, 
+            iconSize: [50, 50], 
+            iconAnchor: [25, 25]
+        })
+    }).bindPopup(popupHtml);
+}
+
+// --- 5. Fixed Layers (Markers & Shapes) ---
+var building = L.icon({ iconUrl: "http://localhost/geo_42/webgiswork/agi.png", iconSize: [50, 50], iconAnchor: [19, 38], popupAnchor: [0, -38] });
+var marker = L.marker([16.746, 100.1959], { icon: building }).bindPopup("คณะเกษตรศาสตร์ฯ มหาวิทยาลัยนเรศวร"); 
+var circle = L.circle([17.625, 100.096], { radius: 500, color: 'red' }).bindPopup("Circle Example"); 
+var polyline = L.polyline([[16.742, 100.180], [16.735, 100.189], [16.735, 100.190], [16.739, 100.189]]).bindPopup("Polyline (Pastel Example)");
+var polygon = L.polygon([[17.62, 100.09], [17.63, 100.09], [17.625, 100.10]]).bindPopup("Polygon (Rainfall Example)");
+
+var fixedLayersGroup = L.layerGroup([marker, circle, polyline, polygon]);
+
+// --- 6. GeoJSON Layers ---
+var ThaiProvJSON = new L.GeoJSON.AJAX(["thailand_province.geojson"], { onEachFeature: onEachFeature, style: style });
+var jsonProv = L.geoJson(null, { onEachFeature: onEachFeature, style: style });
+$.ajax({ dataType: "json", url: "json_sql.php", success: function (data) { jsonProv.addData(data); }, error: function (err) { console.log("error geojson", err); } });
+
+// --- 7. WMS Layers (Layers targeted for Zoom: gcp, road, dis) ---
+var tambon = L.tileLayer.wms('http://localhost:8085/geoserver/geo42/wms', { layers: 'geo42:tha_tambon', format: 'image/png', opacity: 0.5, transparent: true, tiled: 'true' });
+var dis = L.tileLayer.wms('http://localhost:8085/geoserver/utt/wms', { layers: 'utt:district', format: 'image/png', transparent: true, opacity: 0.5, tiled: true, attribution: 'WMS District' });
+var road = L.tileLayer.wms('http://localhost:8085/geoserver/utt/wms', { layers: 'utt:road', format: 'image/png', transparent: true, opacity: 0.5, tiled: true, attribution: 'WMS Road' });
+var gcp = L.tileLayer.wms('http://localhost:8085/geoserver/utt/wms', { layers: 'utt:gcp', format: 'image/png', transparent: true, opacity: 0.5, tiled: true, attribution: 'WMS GCP' });
+
+// --- 8. API Data Layer Groups ---
+var rainfallPL = L.layerGroup();    
+var rainfall24h = L.layerGroup();   
+var waterlevelLayer = L.layerGroup();
+
+// --- 9. API Data Fetch Functions (unchanged) ---
+function loadRainPhitsanulok() {
+    rainfallPL.clearLayers();
+    $.getJSON("https://api-v3.thaiwater.net/api/v1/thaiwater30/public/rain_24h", function (resp) {
+        if (!resp || !resp.data) return;
+        resp.data.forEach(function (rec) {
+            try {
+                var st = rec.station || {};
+                var lat = parseFloat(st.tele_station_lat), lng = parseFloat(st.tele_station_long);
+                if (!isFinite(lat) || !isFinite(lng)) return;
+                if (rec.geocode?.province_code != "65") return; 
+                var mm = parseFloat(rec.rain_24h);
+                if (!isFinite(mm)) mm = 0;
+                var popup = `<div><b>${st.tele_station_name?.th || st.tele_station_name?.en || ""}</b><br>${rec.geocode?.amphoe_name?.th || ""}, ${rec.geocode?.province_name?.th || ""}<br>ฝน 24 ชม.: ${mm} มม.</div>`;
+                numberMarker(lat, lng, mm, popup).addTo(rainfallPL);
+            } catch (e) { }
+        });
+    });
+}
+function loadRainAll() {
+    rainfall24h.clearLayers();
+    $.getJSON("https://api-v3.thaiwater.net/api/v1/thaiwater30/public/rain_24h", function (resp) {
+        if (!resp || !resp.data) return;
+        resp.data.forEach(function (rec) {
+            try {
+                var st = rec.station || {};
+                var lat = parseFloat(st.tele_station_lat), lng = parseFloat(st.tele_station_long);
+                if (!isFinite(lat) || !isFinite(lng)) return;
+                var mm = parseFloat(rec.rain_24h);
+                if (!isFinite(mm)) mm = 0;
+                var popup = `<div><b>${st.tele_station_name?.th || st.tele_station_name?.en || ""}</b><br>${rec.geocode?.tumbon_name?.th || "-"}, ${rec.geocode?.amphoe_name?.th || "-"}, ${rec.geocode?.province_name?.th || "-"}<br>ฝน 24 ชม.: ${mm} มม.</div>`;
+                numberMarker(lat, lng, mm, popup).addTo(rainfall24h);
+            } catch (e) { }
+        });
+    });
+}
+function loadWaterlevel() {
+    waterlevelLayer.clearLayers();
+    $.getJSON('https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel', function (data) {
+        if (!data || !data.data) return;
+        data.data.forEach(item => {
+            let lat = parseFloat(item.station?.tele_station_lat);
+            let lon = parseFloat(item.station?.tele_station_long);
+            if (!isFinite(lat) || !isFinite(lon)) return;
+            let lvl = item.situation_level || 0;
+            let val = (item.waterlevel_msl !== null && isFinite(parseFloat(item.waterlevel_msl))) ? parseFloat(item.waterlevel_msl) : null;
+            let popup = `<div><b>${item.station?.tele_station_name?.th || "-"}</b><br>${item.geocode?.tumbon_name?.th || "-"}, ${item.geocode?.amphoe_name?.th || "-"}, ${item.geocode?.province_name?.th || "-"}<br>ระดับน้ำ: ${val !== null ? val.toFixed(2) : '-'} ม.</div>`;
+            L.marker([lat, lon], { icon: createWaterlevelIcon(lvl, val) }).bindPopup(popup).addTo(waterlevelLayer);
+        });
+    });
+}
+
+loadRainPhitsanulok();
+loadRainAll();
+loadWaterlevel();
+
+// --- 10. Marker Click & DblClick Functions (REMOVED DB Interaction) ---
+// (Script section unchanged)
+
+// --- 11. Layer Control ---
+var baseLayers = {
+    "🌍 Google Map": google_map,
+    "🛰️ Google Satellite": googleSat,
+    "🛰️ Google Hybrid": googleHybrid,
+    "🗺️ OpenStreetMap": openstreetmap,
+    "🧭 Esri Street": EsriWorldStreetMap,
+    "🌄 Esri Imagery": EsriWorldImagery,
+    "🌌 Dark Mode": Darklayar,
+    "📋 Carto Light": cartoLight,
+    "🎨 Watercolor": Stadia_StamenWatercolor
+};
+
+var overlays = {
+    "📌 Fixed Layers (Shapes)": fixedLayersGroup,
+    "ขอบเขตจังหวัด (GeoJSON File)": ThaiProvJSON,
+    "ขอบเขตจังหวัด (GeoJSON SQL)": jsonProv,
+    "ขอบเขตตำบล (WMS:8085)": tambon,
+    "ขอบเขตอำเภอ (WMS:8085)": dis,
+    "point GCP (WMS:8085)": gcp,
+    "ขอบเขตถนน (WMS:8085)": road,
+    "🌧️ ฝน 24 ชม. (Phitsanulok)": rainfallPL,
+    "🌧️ ฝน 24 ชม. (ทั้งประเทศ)": rainfall24h,
+    "💧 ระดับน้ำ": waterlevelLayer,
+};
+
+L.control.layers(baseLayers, overlays, {collapsed: true}).addTo(map);
+
+// --- 12. Legends (Dynamic Control Setup) ---
+const legendContainers = {}; 
+
+// Pastel GeoJSON Legend (topright) - Now Brown-themed
+var pastelLegend = L.control({ position: 'topright' });
+pastelLegend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info legend'); // Using 'info legend' class from trip.html
+    div.id = 'pastel-legend'; 
+    div.innerHTML = '<h4>ขอบเขตจังหวัด (Area)</h4>';
+    var grades = [197600000, 3488100000, 4491200000, 5634800000, 6864500000, 9880600000, 12699300000];
+    for (var i = 0; i < grades.length; i++) {
+        div.innerHTML += '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' + grades[i].toLocaleString() + (grades[i + 1] ? '&ndash;' + grades[i + 1].toLocaleString() + '<br>' : '+');
+    }
+    return div;
+};
+pastelLegend.addTo(map);
+legendContainers['pastel-legend'] = L.DomUtil.get('pastel-legend');
+legendContainers['pastel-legend'].style.display = 'none'; 
+
+// Rainfall Legend (bottomleft)
+var rainfallLegend = L.control({ position: 'bottomleft' });
+rainfallLegend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'legend'); // Using 'legend' class
+    div.id = 'rainfall-legend'; 
+    div.innerHTML = '<h4>🌧️ ฝน 24 ชม. (มม.)</h4>';
+    var items = [
+        { label: '> 150', value: 151 }, { label: '101 - 150', value: 101 }, { label: '71 - 100', value: 71 }, 
+        { label: '51 - 70', value: 51 }, { label: '31 - 50', value: 31 }, { label: '11 - 30', value: 11 }, 
+        { label: '1 - 10', value: 1 }, { label: '0', value: 0 }
+    ];
+    items.forEach(function (it) {
+        div.innerHTML += '<i style="background:' + rainColor(it.value) + '"></i> ' + it.label + '<br>';
+    });
+    return div;
+};
+rainfallLegend.addTo(map);
+legendContainers['rainfall-legend'] = L.DomUtil.get('rainfall-legend');
+legendContainers['rainfall-legend'].style.display = 'none'; 
+
+
+// Waterlevel Legend (bottomleft) 
+var waterlevelLegend = L.control({ position: 'bottomleft' });
+waterlevelLegend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'legend'); // Using 'legend' class
+    div.id = 'waterlevel-legend'; 
+    div.innerHTML = '<h4>💧 ระดับน้ำ</h4>';
+    var items = [
+        { label: 'วิกฤติ (Level 5)', color: getWaterlevelColor(5) },
+        { label: 'เฝ้าระวัง (Level 4)', color: getWaterlevelColor(4) },
+        { label: 'ปกติ (Level 3)', color: getWaterlevelColor(3) },
+        { label: 'ไม่มีข้อมูล/อื่นๆ', color: getWaterlevelColor(0)}
+    ];
+    items.forEach(function (it) {
+        div.innerHTML += '<i style="background:' + it.color + '"></i> ' + it.label + '<br>';
+    });
+    return div;
+};
+waterlevelLegend.addTo(map);
+legendContainers['waterlevel-legend'] = L.DomUtil.get('waterlevel-legend');
+legendContainers['waterlevel-legend'].style.display = 'none'; 
+
+// --- 13. Dynamic Legend Visibility Control & Zoom Logic ---
+// (Script section unchanged)
+
+const dynamicLegendsMap = {
+    [ThaiProvJSON._leaflet_id]: 'pastel-legend',
+    [jsonProv._leaflet_id]: 'pastel-legend',
+    [rainfallPL._leaflet_id]: 'rainfall-legend',
+    [rainfall24h._leaflet_id]: 'rainfall-legend', 
+    [waterlevelLayer._leaflet_id]: 'waterlevel-legend',
+};
+
+function updateLegendVisibility(legendId) {
+    let shouldShow = false;
+    for (const layerId in dynamicLegendsMap) {
+        if (dynamicLegendsMap[layerId] === legendId) {
+            const layer = map._layers[layerId]; 
+            if (layer && map.hasLayer(layer)) {
+                shouldShow = true;
+                break;
+            }
+        }
+    }
+    
+    if (legendContainers[legendId]) {
+        legendContainers[legendId].style.display = shouldShow ? 'block' : 'none';
+    }
+}
+
+const wmsTargetLatlng = [17.776695, 100.510167];
+const wmsTargetZoom = 9; 
+
+const rainPLTargetLatlng = [16.86358, 100.28225];
+const rainPLTargetZoom = 9;
+
+map.on('layeradd', function(e) {
+    const layer = e.layer;
+    const layerId = layer._leaflet_id;
+    
+    if (layer === gcp || layer === road || layer === dis) {
+        map.flyTo(wmsTargetLatlng, wmsTargetZoom, { duration: 1.5 });
+    }
+    if (layer === rainfallPL) {
+        map.flyTo(rainPLTargetLatlng, rainPLTargetZoom, { duration: 1.5 });
+    }
+
+    if (dynamicLegendsMap[layerId]) {
+        setTimeout(() => updateLegendVisibility(dynamicLegendsMap[layerId]), 100);
+    }
+});
+
+map.on('layerremove', function(e) {
+    const layerId = e.layer._leaflet_id;
+    if (dynamicLegendsMap[layerId]) {
+        setTimeout(() => updateLegendVisibility(dynamicLegendsMap[layerId]), 10);
+    }
+});
+
+
+// --- Initial Layer State (Remove layers that should start off) ---
+map.removeLayer(fixedLayersGroup); 
+map.removeLayer(marker); 
+map.removeLayer(circle); 
+map.removeLayer(polyline);
+map.removeLayer(polygon);
+
+map.removeLayer(ThaiProvJSON); 
+map.removeLayer(jsonProv);
+map.removeLayer(rainfallPL);
+map.removeLayer(rainfall24h);
+map.removeLayer(waterlevelLayer);
+map.removeLayer(tambon); 
+map.removeLayer(dis);
+map.removeLayer(road);
+map.removeLayer(gcp);
+
+fixedLayersGroup.addTo(map);
+
+</script>
+</body>
+</html>

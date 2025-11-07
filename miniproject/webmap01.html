@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ข้อมูลนักศึกษาและตัวกรอง (จัดกึ่งกลาง)</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* 1. 🖼️ ตั้งค่า HTML/BODY ให้โปร่งใสและเต็มพื้นที่ */
+        html, body {
+            font-family: 'Prompt', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: transparent !important; 
+            height: 100vh; 
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 2. 📦 กล่องค้นหาหลัก (Container) - ใช้ Flexbox จัดกึ่งกลาง ⭐แก้ไขส่วนนี้⭐ */
+        .search-box {
+            background-color: #f7f9fc;
+            padding: 25px 20px;
+            width: 100%;
+            min-height: 100vh;
+            box-sizing: border-box;
+            color: #333;
+            
+            /* ⭐ การจัดกึ่งกลาง ⭐ */
+            display: flex;
+            flex-direction: column; 
+            align-items: center; /* จัดให้อยู่ตรงกลางตามแนวนอน */
+            justify-content: center; /* จัดให้อยู่ตรงกลางตามแนวตั้ง */
+        }
+
+
+        /* 3. 🏷️ หัวข้อ */
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #555;
+            padding-bottom: 15px;
+            margin: 0 0 25px 0;
+            display: flex;
+            align-items: center;
+        }
+        h3 svg {
+            margin-right: 10px;
+            color: #4A90E2; 
+        }
+        
+        /* 4. 📝 Label และ Input Group */
+        .filter-group {
+            margin-bottom: 20px;
+        }
+        .filter-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* 5. ⌨️ Input และ Select Styles */
+        input[type="text"], select {
+            width: 100%; 
+            padding: 10px 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc; 
+            transition: all 0.2s ease-in-out;
+            box-sizing: border-box;
+            background-color: #fff;
+            color: #333;
+            appearance: none; 
+        }
+        
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #4A90E2; 
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+        }
+
+        /* 6. 🔘 ปุ่ม Actions */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        button {
+            padding: 12px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        button svg {
+            margin-right: 6px;
+        }
+
+        #search-button {
+            background-color: #4A90E2; 
+            color: white;
+            box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
+        }
+        #search-button:hover {
+            background-color: #357ABD;
+        }
+        
+        #reset-button {
+            background-color: #f0f0f0; 
+            color: #666;
+            border: 1px solid #ccc;
+        }
+        #reset-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* 7. 📊 พื้นที่แสดงผลลัพธ์ */
+        #result-count {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #e6f7ff; 
+            border: 1px solid #91d5ff;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #0050b3;
+            font-weight: 500;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="search-box">
+        
+        <div class="form-content" style="border-bottom: 1px solid #e0e0e0; margin-bottom: 25px;">
+            <h3 id="main-heading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-6h-2v6zm0-8h2V7h-2v2z"/></svg>
+                ข้อมูลนักศึกษาและตัวกรอง
+            </h3>
+        </div>
+
+        <div class="form-content"> 
+            
+            <div class="filter-group">
+                <label for="keyword" class="filter-label">คำค้นหาหลัก (ชื่อ, รหัส, จังหวัด)</label>
+                <input type="text" id="keyword" placeholder="พิมพ์ชื่อ, รหัส หรือจังหวัดที่ต้องการค้นหา">
+            </div>
+
+            <div class="filter-group">
+                <label for="filter-main" class="filter-label">ตัวกรองหลัก (หลักสูตร)</label>
+                <select id="filter-main">
+                    <option value="">-- เลือกหลักสูตรทั้งหมด --</option>
+                    <option value="หลักสูตร1">หลักสูตร A</option>
+                    <option value="หลักสูตร2">หลักสูตร B</option>
+                    <option value="หลักสูตร3">หลักสูตร C</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filter-area" class="filter-label">ตัวกรองพื้นที่</label>
+                <select id="filter-area">
+                    <option value="">-- เลือกพื้นที่ทั้งหมด --</option>
+                    <option value="ภาค1">ภาคเหนือ</option>
+                    <option value="ภาค2">ภาคกลาง</option>
+                    <option value="ภาค3">ภาคใต้</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button id="search-button" onclick="sendFilterData()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    ค้นหา
+                </button>
+                <button id="reset-button" onclick="resetFilters()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.2-5.4M22 12.5a10 10 0 0 1-18.2 5.4"></path></svg>
+                    รีเซ็ต
+                </button>
+            </div>
+            
+            <div id="result-count">💡 พร้อมสำหรับการค้นหา</div>
+        </div>
+    </div>
+
+    <script>
+        // 📤 ฟังก์ชันรวบรวมและส่งข้อมูลตัวกรองไปยัง parent window (ฟังก์ชันเดิม)
+        function sendFilterData() {
+            const keyword = document.getElementById("keyword").value.trim();
+            const filterMain = document.getElementById("filter-main").value;
+            const filterArea = document.getElementById("filter-area").value;
+            
+            // รวมค่าทั้งหมดเข้าด้วยกัน
+            let combinedKeyword = keyword;
+            if (filterMain) combinedKeyword += `|หลักสูตร:${filterMain}`;
+            if (filterArea) combinedKeyword += `|พื้นที่:${filterArea}`;
+            
+            // ส่งข้อมูลไปยังหน้าแม่
+            window.parent.postMessage({ 
+                keyword: combinedKeyword 
+            }, "*"); 
+            
+            document.getElementById("result-count").innerHTML = `กำลังค้นหาข้อมูล: **${keyword || filterMain || filterArea ? 'ใช้งานตัวกรอง' : 'ทั้งหมด'}**...`;
+        }
+
+        // 🔄 ฟังก์ชันรีเซ็ตค่าในช่องกรอกและตัวเลือกทั้งหมด (ฟังก์ชันเดิม)
+        function resetFilters() {
+            document.getElementById("keyword").value = "";
+            document.getElementById("filter-main").selectedIndex = 0;
+            document.getElementById("filter-area").selectedIndex = 0;
+            
+            // ส่งคำสั่งค้นหาว่างเปล่าเพื่อแสดงข้อมูลทั้งหมดบนแผนที่
+            window.parent.postMessage({ keyword: '' }, "*"); 
+            
+            document.getElementById("result-count").innerHTML = `🔄 รีเซ็ตตัวกรองแล้ว กำลังโหลดข้อมูลทั้งหมด...`;
+        }
+
+        // ✅ เพิ่มฟังก์ชันจับปุ่ม Enter บนช่อง input และการจัดการ Message
+        document.addEventListener("DOMContentLoaded", () => {
+            const input = document.getElementById("keyword");
+            input.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    sendFilterData();
+                }
+            });
+            
+            // 🆕 ฟังก์ชันรับข้อความอัปเดตจำนวนผลลัพธ์จาก iframe แผนที่
+            window.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'updateCount') {
+                    const count = event.data.count;
+                    const resultText = (typeof count === 'number') 
+                        ? `✅ พบข้อมูลนักศึกษา **${count}** รายการ`
+                        : `${count}`;
+                        
+                    document.getElementById('result-count').innerHTML = resultText;
+                }
+            });
+            
+            // เรียก sendFilterData เพื่อให้แผนที่แสดงข้อมูลเริ่มต้นเมื่อโหลดเสร็จ
+            sendFilterData();
+        });
+    </script>
+</body>
+</html>

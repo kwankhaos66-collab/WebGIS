@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHANGING THINKING</title>
+
+  <!-- โหลดฟอนต์ -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Prompt', sans-serif;
+    }
+
+    body {
+      font-family: 'Prompt', sans-serif;
+      margin: 0;
+      padding: 130px 15px 50px; /* เผื่อที่ให้ Navbar และ Footer */
+      background: linear-gradient(135deg, #4e342e, #795548, #efebe9);
+      background-size: 400% 400%;
+      animation: gradientFlow 15s ease infinite;
+      color: #333;
+    }
+
+    @keyframes gradientFlow {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* ✅ NAVIGATION BAR */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      padding: 15px 0;
+      z-index: 999;
+      backdrop-filter: blur(8px);
+    }
+
+    nav a {
+      color: #f5f5f5;
+      text-decoration: none;
+      font-size: 16px;
+      padding: 8px 16px;
+      border-radius: 30px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    nav a:hover {
+      background: #c9bba0;
+      color: #2d2419;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+      margin-bottom: 50px;
+      font-size: 2.5rem;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 16px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+    }
+
+    .card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .card img:hover {
+      transform: scale(1.05);
+    }
+
+    .card-description {
+      padding: 15px;
+      font-size: 1.1rem;
+      text-align: center;
+      color: #5d4037;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+
+    .modal-content p {
+      font-size: 1.3rem;
+      color: #333;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 18px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #777;
+    }
+
+    .close-btn:hover {
+      color: #000;
+    }
+
+    .back-btn,
+    .next-btn {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 10px 20px;
+      background: #8d6e63;
+      color: white;
+      text-decoration: none;
+      border-radius: 30px;
+      transition: background 0.3s ease;
+    }
+
+    .next-btn {
+      margin-left: 15px;
+      background: #91776f;
+    }
+
+    .back-btn:hover {
+      background: #6d4c41;
+    }
+
+    .next-btn:hover {
+      background: #4e342e;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      font-size: 14px;
+      color: #ffffff;
+      opacity: 0.6;
+      text-align: right;
+      z-index: 998;
+    }
+
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ✅ NAVIGATION BAR -->
+ <nav>
+    <a href="me000.html">🏠 HOME</a>
+    <a href="me00.html">🙋‍♀️ ALL ME</a>
+    <a href="me01.html">🌍 WHAT IS GEOGRAPHY?</a>
+    <a href="me02.html">🧠 CHANGING THINKING</a>
+    <a href="webmap00.html">🗺️ AGI STUDENT</a>
+    <a href="trip.html">🏞️ HIKING MAPS</a>
+    <a href="miniprojcet.html">🛰️ ALL MAPS</a>
+    </nav>
+
+  <!-- ✅ หัวเรื่อง -->
+  <h1>ความคิดที่เปลี่ยนไปเมื่อเรียนภูมิศาสตร์</h1>
+
+  <!-- ✅ แกลเลอรี -->
+  <div class="gallery">
+    <div class="card">
+      <img src="แผนที่ไทย.jpg" alt="ไทย" data-description="ภูมิศาสตร์คือการศึกษาสิ่งต่าง ๆ บนโลก ทั้งทางธรรมชาติและมนุษย์ รวมถึงความสัมพันธ์ระหว่างกัน แผนที่เป็นเพียงเครื่องมือที่ใช้แสดงข้อมูลเชิงพื้นที่ช่วยให้เข้าใจตำแหน่งและรูปแบบต่าง ๆ ได้ง่ายขึ้น แต่ภูมิศาสตร์มีความกว้างกว่าการดูแผนที่ เพราะต้องวิเคราะห์และเข้าใจปรากฏการณ์ต่าง ๆ ที่เกิดขึ้นบนโลกในมิติทั้งทางกายภาพ สังคม และวัฒนธรรม">
+      <div class="card-description">ภูมิศาสตร์ ≠ แผนที่</div>
+    </div>
+    <div class="card">
+      <img src="โลกร้อน.jpg" alt="โลกร้อน" data-description="การเปลี่ยนแปลงของสภาพอากาศโลกที่เพิ่มขึ้นอย่างค่อยเป็นค่อยไป จนหลายพื้นที่หรือผู้คนไม่ได้ตระหนักถึงความรุนแรงและผลกระทบที่เกิดขึ้นทันที การสะสมของก๊าซเรือนกระจก เช่น คาร์บอนไดออกไซด์จากกิจกรรมของมนุษย์ ทำให้อุณหภูมิเฉลี่ยของโลกสูงขึ้น ส่งผลต่อระบบนิเวศ สภาพภูมิอากาศ และรูปแบบการใช้ชีวิต ซึ่งภูมิศาสตร์ช่วยวิเคราะห์และแสดงความสัมพันธ์ระหว่างการเปลี่ยนแปลงทางธรรมชาติกับกิจกรรมของมนุษย์ในพื้นที่ต่าง ๆ เพื่อเข้าใจและเตรียมรับมือกับผลกระทบเหล่านี้อย่างมีประสิทธิภาพ">
+      <div class="card-description">โลกร้อนที่ไม่ทันรู้ตัว</div>
+    </div>
+    <div class="card">
+      <img src="AI.jpg" alt="AI" data-description="ในทางภูมิศาสตร์ มนุษย์และ AI ในยุคปัจจุบันมีบทบาทร่วมกันอย่างใกล้ชิดในการเปลี่ยนแปลงและวิเคราะห์โลก มนุษย์ยังคงเป็นผู้กำหนดทิศทางการพัฒนา ใช้ทรัพยากร และสร้างชุมชน ขณะที่ AI เข้ามาช่วยประมวลผลข้อมูลเชิงพื้นที่จำนวนมหาศาล เช่น แผนที่ดิจิทัล การวิเคราะห์ภูมิอากาศ การวางผังเมือง และการจัดการทรัพยากร ทำให้การทำงานด้านภูมิศาสตร์มีประสิทธิภาพและแม่นยำขึ้น การผสมผสานระหว่างมนุษย์และ AI จึงช่วยให้เราสามารถเข้าใจความซับซ้อนของโลกมากขึ้น พร้อมรับมือกับปัญหาทางสิ่งแวดล้อมและสังคมในระดับพื้นที่และระดับโลกได้ดีขึ้น">
+      <div class="card-description">มนุษย์และ AI ในยุคปัจจุบัน</div>
+    </div>
+  </div>
+
+  <!-- ✅ Modal popup -->
+  <div class="modal" id="imageModal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeModal">&times;</span>
+      <img id="modalImage" src="">
+      <p id="modalDescription"></p>
+    </div>
+  </div>
+
+  <!-- ✅ JavaScript -->
+  <script>
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalDescription = document.getElementById('modalDescription');
+    const closeBtn = document.getElementById('closeModal');
+    const galleryImages = document.querySelectorAll('.card img');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      modal.style.display = 'none';
+    });
+
+    galleryImages.forEach(img => {
+      img.addEventListener('click', () => {
+        modalImage.src = img.src;
+        modalDescription.textContent = img.dataset.description;
+        modal.style.display = 'flex';
+      });
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    window.addEventListener('click', e => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  </script>
+
+  <!-- ✅ ปุ่มย้อนกลับ และ ต่อไป -->
+  <div style="text-align: center;">
+    <a href="me01.html" class="back-btn">← ย้อนกลับ</a>
+    <a href="me03.html" class="next-btn">ต่อไป →</a>
+  </div>
+
+  
+
+</body>
+
+</html>

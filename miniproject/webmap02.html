@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>แผนที่โรงเรียนของนักศึกษา</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> 
+    
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+    
+    <style>
+        /* ... (CSS styles remains unchanged) ... */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, #fdfaf5, #ece3d6);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h3 {
+            margin: 15px 0 10px;
+            color: #5a4723;
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        #mapid {
+            width: 95%;
+            height: calc(100vh - 70px);
+            border-radius: 15px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            h3 {
+                font-size: 1.2rem;
+                margin-top: 10px;
+            }
+
+            #mapid {
+                width: 95%;
+                height: calc(100vh - 60px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h3>🗺️ แผนที่แสดงตำแหน่งนักศึกษา</h3>
+    <div id="mapid"></div>
+
+    <script>
+        
+        // ✅ Base Layers
+        const baseLayers = {
+            "🗺️ แผนที่ทั่วไป (OSM)": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }),
+
+            "🛰️ แผนที่ดาวเทียม (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri'
+            }),
+
+            "🏔️ แผนที่ภูมิประเทศ (Topo)": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                attribution: 'Map data © OpenTopoMap contributors'
+            })
+        };
+
+        // 🆕 Overlay Layers (WMS)
+        const overlayLayers = {
+            "🗺️ Map WMS (plk_buildings)": L.tileLayer.wms('http://localhost:8085/geoserver/geo42/wms', { 
+                layers: 'geo42:plk_buildings', // ✅ แก้ไข: ลบช่องว่างและใช้รูปแบบ Workspace:LayerName
+                format: 'image/png', 
+                opacity: 0.5, 
+                transparent: true, 
+                tiled: 'true',
+                attribution: 'WMS Data'
+            })
+        };
+
+        // ✅ สร้างแผนที่
+        const map = L.map('mapid', {
+            center: [15.5, 100.3],
+            zoom: 7,
+            layers: [baseLayers["🗺️ แผนที่ทั่วไป (OSM)"]]
+        });
+
+        // ✅ เพิ่มแถบเลือกประเภทแผนที่ (ทั้ง Base และ Overlay)
+        L.control.layers(baseLayers, overlayLayers).addTo(map);
+
+        // 📌 ตัวแปรเก็บ marker
+        let markers = [];
+        let geojsonLayer = null; // ตัวแปรสำหรับเก็บ GeoJSON Layer
+
+        // 🆕 ฟังก์ชันสำหรับอัปเดตจำนวนผลลัพธ์ใน Parent Frame
+        function updateResultCount(count) {
+            if (window.parent && window.parent.document.getElementById('iframeMenu')) {
+                window.parent.document.getElementById('iframeMenu').contentWindow.postMessage({ 
+                    type: 'updateCount', 
+                    count: count 
+                }, '*');
+            }
+        }
+        
+        // 🆕 ฟังก์ชัน: ดึงข้อมูล GeoJSON จาก PHP (PostGIS)
+        async function fetchGeoJSON(keyword = '') {
+            // ⚠️ เปลี่ยนมาใช้ URL ที่ถูกต้อง: agi65.php
+            let url = '';
+            if (keyword.trim() === '') {
+                url = `agi65.php?type=initial`;
+                updateResultCount('กำลังโหลดข้อมูลทั้งหมด...');
+            } else {
+                const encodedKeyword = encodeURIComponent(keyword);
+                url = `agi65.php?type=keyword&value=${encodedKeyword}`; 
+                updateResultCount(`กำลังค้นหา "${keyword}"...`);
+            }
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                return data; 
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                updateResultCount('❌ Error โหลดข้อมูล (โปรดตรวจสอบ agi65.php)');
+                return { type: 'FeatureCollection', features: [] };
+            }
+        }
+
+
+        // 🔄 ฟังก์ชันอัปเดต marker บนแผนที่ (ใช้ข้อมูลจริง)
+        async function updateMap(keyword = '') {
+            // 1. ลบ layer เก่าออก
+            if (geojsonLayer) {
+                map.removeLayer(geojsonLayer);
+            }
+            
+            // 2. ดึงข้อมูลจริงจากเซิร์ฟเวอร์
+            const liveGeojson = await fetchGeoJSON(keyword);
+
+            // 3. สร้าง GeoJSON Layer ใหม่
+            // ใช้ L.geoJSON แทน L.GeoJSON.AJAX เนื่องจากเราจัดการการ fetch เองด้วย fetchGeoJSON
+            geojsonLayer = L.geoJSON(liveGeojson, {
+                pointToLayer: function (feature, latlng) {
+                    // ใช้ Marker Icon เริ่มต้น
+                    return L.marker(latlng);
+                },
+                onEachFeature: function (feature, layer) {
+                    const p = feature.properties;
+                    if (p) {
+                        // ℹ️ ใช้ชื่อคอลัมน์ตัวพิมพ์เล็กตามที่แก้ไขใน PHP
+                        const popupContent = `
+                            <b>${p.s_name} (${p.s_id})</b><br>
+                            หลักสูตร: ${p.curriculum}<br>
+                            คณะ: ${p.faculty}<br>
+                            จบจาก: ${p.graduated_school}<br>
+                            จังหวัด: ${p.province}
+                        `;
+                        layer.bindPopup(popupContent);
+                    }
+                }
+            }).addTo(map);
+
+            // 4. อัปเดตจำนวนผลลัพธ์
+            const featureCount = liveGeojson.features ? liveGeojson.features.length : 0;
+            updateResultCount(featureCount);
+            
+            // 5. ปรับขอบเขตแผนที่ (Auto-zoom)
+            if (featureCount > 0) {
+                map.fitBounds(geojsonLayer.getBounds(), { padding: [20, 20] });
+            } else {
+                // ถ้าไม่มีผลลัพธ์ ให้กลับไปซูมที่ประเทศไทย (ค่าเริ่มต้น)
+                map.setView([15.5, 100.3], 7);
+            }
+        }
+
+        // 📥 รับ keyword จาก iframe (เช่นจากช่องค้นหา)
+        window.addEventListener("message", (e) => {
+            const keyword = e.data.keyword || '';
+            updateMap(keyword);
+        });
+
+        // 🔃 แสดงผลครั้งแรก
+        updateMap();
+    </script>
+</body>
+</html>

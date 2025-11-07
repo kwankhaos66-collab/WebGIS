@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to Me</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@600&display=swap');
+
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: 'Prompt', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #251a0ec5, #2b2107);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ====== LOGIN / REGISTER BOX ====== */
+    .auth-box {
+      background-color: #ffffff;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 400px;
+      text-align: left;
+      border-top: 8px solid #887c65;
+      animation: fadeIn 0.6s ease;
+    }
+
+    h2 {
+      color: #111;
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 28px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #333;
+      font-size: 16px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #000;
+      background-color: #887c65;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover { background-color: #6e695f; }
+
+    #error-message {
+      color: #D8000C;
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+      display: none;
+    }
+
+    #success-message {
+      color: green;
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .switch-link {
+      text-align: center;
+      margin-top: 15px;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .switch-link a {
+      color: #887c65;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ====== MAIN CONTENT ====== */
+    #main-content {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #fff;
+      animation: fadeIn 1s ease;
+    }
+
+    h1 { display: flex; gap: 10px; }
+    h1 span {
+      font-size: 100px;
+      color: #fff;
+      text-transform: uppercase;
+      display: inline-block;
+      position: relative;
+      animation: bounce 1s ease-in-out infinite;
+    }
+    h1 span:nth-child(1){animation-delay:0s}
+    h1 span:nth-child(2){animation-delay:0.1s}
+    h1 span:nth-child(3){animation-delay:0.2s}
+    h1 span:nth-child(4){animation-delay:0.3s}
+    h1 span:nth-child(5){animation-delay:0.4s}
+
+    @keyframes bounce {
+      0%,100%{transform:translateY(0)}
+      50%{transform:translateY(-25px)}
+    }
+
+    p {
+      margin-top: 20px;
+      color: #b6b1a1;
+      font-size: 22px;
+    }
+
+    .nav-buttons {
+      margin-top: 30px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeIn 1s ease 1s both;
+    }
+
+    .nav-buttons a {
+      padding: 10px 20px;
+      background-color: #887c65;
+      color: #000;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      transition: 0.3s;
+    }
+
+    .nav-buttons a:hover {
+      background-color: #6e695f;
+      transform: translateY(-3px);
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: #fff;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🔐 หน้าล็อกอิน -->
+  <div id="login-box" class="auth-box">
+    <h2>เข้าสู่ระบบ</h2>
+    <div class="input-group">
+      <label for="login-email">อีเมล</label>
+      <input type="email" id="login-email" placeholder="กรอกอีเมล">
+    </div>
+    <div class="input-group">
+      <label for="login-password">รหัสผ่าน</label>
+      <input type="password" id="login-password" placeholder="กรอกรหัสผ่าน">
+    </div>
+    <button id="login-btn">เข้าสู่ระบบ</button>
+    <p id="error-message">อีเมลหรือรหัสผ่านไม่ถูกต้อง</p>
+    <div class="switch-link">
+      ยังไม่มีบัญชี? <a id="to-register">สมัครสมาชิก</a>
+    </div>
+  </div>
+
+  <!-- 🧾 หน้าสมัครสมาชิก -->
+  <div id="register-box" class="auth-box" style="display:none;">
+    <h2>สมัครสมาชิก</h2>
+    <div class="input-group">
+      <label for="reg-email">อีเมล</label>
+      <input type="email" id="reg-email" placeholder="กรอกอีเมลของคุณ">
+    </div>
+    <div class="input-group">
+      <label for="reg-password">รหัสผ่าน</label>
+      <input type="password" id="reg-password" placeholder="สร้างรหัสผ่าน">
+    </div>
+    <button id="register-btn">สมัครสมาชิก</button>
+    <p id="success-message">สมัครสำเร็จ! โปรดเข้าสู่ระบบ</p>
+    <div class="switch-link">
+      มีบัญชีแล้ว? <a id="to-login">เข้าสู่ระบบ</a>
+    </div>
+  </div>
+
+  <!-- 🌍 MAIN CONTENT -->
+  <div id="main-content">
+    <h1>
+      <span>H</span><span>E</span><span>L</span><span>L</span><span>O</span>
+    </h1>
+    <p>Welcome to my website</p>
+
+    <div class="nav-buttons">
+      <a href="me000.html">🏠 HOME</a>
+      <a href="me00.html">🙋‍♀️ ALL ME</a>
+      <a href="me01.html">🌍 WHAT IS GEOGRAPHY?</a>
+      <a href="me02.html">🧠 CHANGING THINKING</a>
+      <a href="webmap00.html">🗺️ AGI STUDENT</a>
+      <a href="trip.html">🏞️ HIKING MAPS</a>
+      <a href="miniprojcet.html">🛰️ ALL MAPS</a>
+    </div>
+
+    <footer>© 2025 Kwankhao Songma | สร้างด้วย ❤️ และกาแฟ</footer>
+  </div>
+
+  <script>
+    const loginBox = document.getElementById('login-box');
+    const registerBox = document.getElementById('register-box');
+    const mainContent = document.getElementById('main-content');
+    const errorMessage = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+
+    // สลับหน้า
+    document.getElementById('to-register').onclick = () => {
+      loginBox.style.display = 'none';
+      registerBox.style.display = 'block';
+    };
+    document.getElementById('to-login').onclick = () => {
+      registerBox.style.display = 'none';
+      loginBox.style.display = 'block';
+    };
+
+    // สมัครสมาชิก
+    document.getElementById('register-btn').onclick = () => {
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value.trim();
+
+      if (!email || !password) return alert('กรอกข้อมูลให้ครบ');
+      localStorage.setItem('userEmail', email);
+      localStorage.setItem('userPassword', password);
+
+      successMessage.style.display = 'block';
+      setTimeout(() => {
+        registerBox.style.display = 'none';
+        loginBox.style.display = 'block';
+        successMessage.style.display = 'none';
+      }, 1500);
+    };
+
+    // เข้าสู่ระบบ
+    document.getElementById('login-btn').onclick = () => {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const savedEmail = localStorage.getItem('userEmail');
+      const savedPassword = localStorage.getItem('userPassword');
+
+      if (email === savedEmail && password === savedPassword) {
+        loginBox.style.display = 'none';
+        mainContent.style.display = 'flex';
+        errorMessage.style.display = 'none';
+      } else {
+        errorMessage.style.display = 'block';
+      }
+    };
+  </script>
+</body>
+</html>

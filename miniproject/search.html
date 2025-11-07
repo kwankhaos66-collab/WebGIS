@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropdown Search Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        /* 🎨 CSS ปรับปรุง: เพื่อให้เต็มพื้นที่ iframe */
+        body { 
+            font-family: 'Prompt', sans-serif;
+            padding: 15px; 
+            background-color: transparent; 
+            /* ✅ แก้ไข: ลบ margin ของ body ออกเพื่อให้ชิดขอบ iframe */
+            margin: 0; 
+        }
+        
+        .search-section { 
+            padding: 5px; /* ลด Padding ลงเล็กน้อย */
+            text-align: left;
+            background-color: transparent; 
+            box-shadow: none;
+            width: 100%; 
+            max-width: none; 
+            box-sizing: border-box;
+            /* ✅ แก้ไข: กำหนดความสูงเป็น auto เพื่อให้ปรับตามเนื้อหาและลบพื้นที่ว่าง */
+            height: auto; 
+        }
+        
+        /* ปรับ Input และ Select ให้เต็มความกว้าง */
+        .search-section select,
+        .search-section input[type="text"] {
+            padding: 10px; /* ลด padding ลงเล็กน้อย */
+            font-size: 14px; /* ลด font size ลงเล็กน้อย */
+            border-radius: 8px; 
+            border: 2px solid #ff85aa; 
+            margin: 8px 0; 
+            width: 100%; 
+            max-width: none; 
+            display: block; 
+            margin-left: 0; 
+            margin-right: 0; 
+            box-sizing: border-box; 
+            transition: all 0.3s ease;
+        }
+        .search-section input[type="text"]:focus,
+        .search-section select:focus {
+            border-color: #c2185b; 
+            box-shadow: 0 0 5px rgba(194, 24, 91, 0.5);
+            outline: none;
+        }
+
+        .search-section .filter-group {
+            margin-bottom: 15px; /* ลด margin-bottom ลง */
+            padding: 5px 0;
+            border-bottom: 1px dashed #ff85aa;
+        }
+
+        /* ปุ่มค้นหาและรีเซต */
+        .search-section button {
+            padding: 10px 15px;
+            background-color: rgb(255, 91, 115) !important; 
+            color: white !important; 
+            border: none !important;
+            border-radius: 5px !important;
+            cursor: pointer !important;
+            margin: 10px 5px; 
+            font-weight: 700 !important;
+            transition: background-color 0.3s, transform 0.2s;
+            font-size: 14px; /* ปรับขนาดปุ่ม */
+        }
+        .search-section button:hover {
+            background-color: #c2185b !important; 
+            transform: translateY(-1px);
+        }
+        /* Style สำหรับปุ่ม Reset */
+        .search-section button:nth-of-type(2) { 
+            background-color: #ffaec9 !important;
+        }
+        .search-section button:nth-of-type(2):hover {
+            background-color: #ff899d !important;
+        }
+
+
+        #resultCount {
+            margin-top: 15px;
+            font-weight: 700;
+            color: #4a4a4a; /* ปรับสีให้ดูเป็นสถานะ */
+            font-size: 1.1em;
+            text-align: center; 
+            padding: 10px 0;
+            border-top: 2px solid #c2185b; /* เน้นด้วยเส้นสีเข้ม */
+            /* ✅ แก้ไข: ลบ 'พร้อมค้นหา' ออกจากโค้ด HTML แล้วใส่ไอคอนแทน */
+        }
+        
+        .label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: 700;
+            color: #c2185b;
+            font-size: 14px; /* ปรับขนาด label */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="search-section">
+        
+        <div class="filter-group">
+            <input
+                list="searchSuggestions"
+                type="text"
+                id="searchInput"
+                placeholder="ค้นหาชื่อ, รหัส, จังหวัด"
+                autocomplete="off"
+            />
+            <datalist id="searchSuggestions"></datalist>
+        </div>
+
+        <div class="filter-group">
+            <span class="label">ตัวกรองหลัก (หลักสูตร)</span>
+            <select id="primaryCategory" onchange="updatePrimaryCategory()"> 
+                <option value="">เลือกประเภท</option>
+                <option value="curriculum">หลักสูตร</option>
+            </select>
+            <select id="primaryValue" style="display:none;"></select>
+        </div>
+
+        <div class="filter-group">
+            <span class="label">ตัวกรองพื้นที่</span>
+            <select id="areaCategory" onchange="updateAreaCategory()"> 
+                <option value="">เลือกประเภท</option>
+                <option value="province">จังหวัด</option> 
+            </select>
+            <select id="areaValue" style="display:none;"></select>
+        </div>
+        
+        <div style="text-align: center; margin-top: 5px; margin-bottom: 5px;">
+            <button onclick="searchStudent()"><i class="fas fa-search"></i> ค้นหา</button>
+            <button onclick="resetFilters()"><i class="fas fa-redo"></i> รีเซต</button>
+        </div>
+
+        <div id="resultCount"><i class="fas fa-info-circle"></i> พร้อมค้นหา</div>
+        </div>
+    
+    <script>
+        var globalUniqueData = {}; 
+
+        function updateAutocompleteList(data) {
+            const datalist = document.getElementById('searchSuggestions');
+            datalist.innerHTML = ''; 
+            data.forEach(item => {
+                let option = document.createElement('option');
+                option.value = item;
+                datalist.appendChild(option);
+            });
+        }
+
+        // ฟังก์ชันนี้จะเรียกฟังก์ชัน updateDropdown ในหน้าแม่ (parent) 
+        function updatePrimaryCategory() {
+            const category = document.getElementById('primaryCategory').value;
+            // ส่ง category และ id ของ Dropdown ที่ต้องการอัปเดตไปให้หน้าแม่
+            if (window.parent && window.parent.updateDropdown) {
+                window.parent.updateDropdown('primaryValue', category);
+            }
+        }
+
+        // ฟังก์ชันนี้จะเรียกฟังก์ชัน updateDropdown ในหน้าแม่ (parent) 
+        function updateAreaCategory() {
+            const category = document.getElementById('areaCategory').value;
+            // ส่ง category และ id ของ Dropdown ที่ต้องการอัปเดตไปให้หน้าแม่
+            if (window.parent && window.parent.updateDropdown) {
+                window.parent.updateDropdown('areaValue', category);
+            }
+        }
+        
+        function searchStudent() {
+            if (window.parent) {
+                window.parent.postMessage({ action: 'search' }, '*'); 
+            }
+        }
+
+        function resetFilters() {
+            if (window.parent) {
+                window.parent.postMessage({ action: 'reset' }, '*'); 
+            }
+        }
+        
+        function resetForm() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('primaryCategory').value = '';
+            document.getElementById('areaCategory').value = '';
+            
+            // ซ่อนและล้าง Dropdown ที่แสดงค่า
+            const primaryValueDropdown = document.getElementById('primaryValue');
+            primaryValueDropdown.style.display = 'none';
+            primaryValueDropdown.innerHTML = ''; 
+            
+            const areaValueDropdown = document.getElementById('areaValue');
+            areaValueDropdown.style.display = 'none';
+            areaValueDropdown.innerHTML = '';
+            
+            document.getElementById('resultCount').innerHTML = '<i class="fas fa-info-circle"></i> พร้อมค้นหา';
+            
+            updateAutocompleteList([]);
+        }
+
+        // Listener สำหรับรับข้อความจากหน้าแม่ (index.html)
+        window.addEventListener('message', function(event) {
+            const data = event.data;
+            
+            if (data.type === 'updateCount') {
+                let countText;
+                if (typeof data.count === 'number') {
+                    countText = `<i class="fas fa-check-circle" style="color:#008000;"></i> พบ ${data.count} รายการ`;
+                } else if (data.count === 'กำลังค้นหา...') {
+                    countText = `<i class="fas fa-spinner fa-spin" style="color:#f0c37f;"></i> กำลังค้นหา...`;
+                } else {
+                    countText = `<i class="fas fa-info-circle"></i> ${data.count}`;
+                }
+                document.getElementById('resultCount').innerHTML = countText;
+            } else if (data.type === 'resetForm') {
+                resetForm();
+            } else if (data.type === 'initData' && data.uniqueData) {
+                globalUniqueData = data.uniqueData;
+                document.getElementById('resultCount').innerHTML = '<i class="fas fa-info-circle"></i> พร้อมค้นหา';
+                
+                if (data.autocompleteData) {
+                    updateAutocompleteList(data.autocompleteData);
+                }
+            } else if (data.type === 'autocomplete' && data.data) {
+                updateAutocompleteList(data.data);
+            }
+        });
+        
+        resetForm(); 
+    </script>
+</body>
+</html>

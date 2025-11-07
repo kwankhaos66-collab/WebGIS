@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏞️ จุดเดินป่าและธรรมชาติในไทย (Client-Side Search)</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ตัวแปรสีหลัก - โทนน้ำตาล/เบจ/เอิร์ธโทน */
+        :root {
+            --color-primary: #633f17; 
+            --color-secondary: #a89c82; 
+            --color-accent: #b8860b; 
+            --color-bg: #f5f0e9; 
+            --color-text: #685e4e; 
+            --color-border: #d4c1a0; 
+            --color-white: #ffffff;
+            --color-brown-text: #4e4437;
+        }
+        
+        body { 
+            font-family: 'Prompt', sans-serif; 
+            text-align: center; 
+            background: linear-gradient(135deg, var(--color-bg), #e6e0d9); 
+            color: var(--color-text); 
+            padding-bottom: 50px; 
+            padding-top: 80px; 
+            margin: 0;
+            line-height: 1.6;
+        }
+        h1 { 
+            color: var(--color-primary); 
+            margin-top: 25px; 
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 2.2em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+        }
+        .note { 
+            color: #6a6a6a; 
+            font-size: 1.1em; 
+            margin-bottom: 25px; 
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #map { 
+            height: 75vh; 
+            width: 92%; 
+            margin: 0 auto; 
+            border: 2px solid var(--color-border); 
+            border-radius: 15px; 
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); 
+            z-index: 1; 
+            transition: all 0.3s ease;
+        }
+        #map:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* รูปแบบสำหรับข้อความผลลัพธ์ระยะทาง */
+        .result-text { 
+            font-weight: 600; 
+            color: var(--color-primary); 
+            font-size: 1.15em; 
+            margin-top: 8px; 
+        } 
+
+        /* รูปแบบสำหรับปุ่มใน Popup */
+        .leaflet-popup-content button { 
+            background-color: var(--color-secondary); 
+            color: var(--color-primary); 
+            border: 1px solid var(--color-primary);
+            padding: 10px 15px; 
+            font-size: 14px; 
+            margin: 10px 5px 5px 5px; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            transition: background-color 0.3s ease, transform 0.2s ease; 
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+        .leaflet-popup-content button:hover { 
+            background-color: var(--color-primary); 
+            color: var(--color-white); 
+            transform: translateY(-2px);
+        }
+        .leaflet-popup-content h3 {
+            color: var(--color-primary);
+            margin: 5px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--color-border);
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+        .leaflet-popup-content h4 { 
+            margin: 12px 0 6px 0; 
+            color: var(--color-text); 
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        .leaflet-popup-content .invite-text { 
+            font-style: italic; 
+            color: var(--color-primary); 
+            font-size: 1em;
+            padding: 8px 12px;
+            border-left: 4px solid var(--color-secondary);
+            background-color: #f7f3ed; 
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        /* สไตล์สำหรับ Input ใน Popup (Search/Insert) */
+        .leaflet-popup-content input[type="text"],
+        .leaflet-popup-content input[type="number"] {
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--color-border);
+            width: 90%;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+            font-family: 'Prompt', sans-serif;
+            color: var(--color-primary);
+            text-align: center; 
+        }
+        .leaflet-popup-content label {
+            display: inline-block;
+            width: 40%;
+            text-align: right;
+            margin-right: 5px;
+        }
+
+        /* แผงควบคุมตัวกรอง (Control Panel) */
+        .filter-panel { 
+            width: 92%; 
+            margin: 30px auto 20px auto; 
+            padding: 25px; 
+            background-color: var(--color-white); 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); 
+            text-align: left; 
+            display: flex; 
+            gap: 25px; 
+            justify-content: center; 
+            flex-wrap: wrap; 
+            border: 1px solid var(--color-border);
+        }
+        .filter-group { flex: 1; min-width: 180px; position: relative; }
+        .filter-group label { font-weight: 600; color: var(--color-primary); display: block; margin-bottom: 8px; font-size: 1.1em; }
+        .filter-group select {
+            padding: 10px 15px; padding-right: 35px; border-radius: 8px; border: 2px solid var(--color-border); 
+            background-color: var(--color-white); min-width: 100%; cursor: pointer; transition: all 0.3s ease;
+            -webkit-appearance: none; -moz-appearance: none; appearance: none; background-repeat: no-repeat;
+            background-position: right 12px center; background-size: 10px; color: var(--color-brown-text);
+        }
+        .filter-group select:hover { border-color: var(--color-secondary); box-shadow: 0 0 0 1px var(--color-secondary); }
+        .filter-group select:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(99, 63, 23, 0.2); }
+
+        /* Custom Arrow */
+        .filter-group::after { content: '▼'; position: absolute; top: 40px; right: 15px; font-size: 10px; color: var(--color-primary); pointer-events: none; z-index: 10; transition: transform 0.2s; }
+        
+        /* รูปแบบสำหรับ Legend */
+        .legend { line-height: 25px; color: var(--color-brown-text); background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid var(--color-border); }
+        .legend h4 { color: var(--color-primary); margin-top: 0; margin-bottom: 10px; font-size: 1.15em; font-weight: 600; }
+        .legend i { width: 20px; height: 20px; float: left; margin-right: 10px; opacity: 0.95; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+
+        /* กราฟิกเปรียบเทียบความสูงใน Popup */
+        .elevation-chart { margin-top: 15px; padding-top: 10px; border-top: 1px dashed #d8d8d8; text-align: left; }
+        .elevation-chart p { margin-bottom: 5px; color: #777; font-size: 0.9em; }
+        .elevation-bar { width: 100%; height: 18px; background-color: #f7f3ed; border-radius: 9px; margin-top: 5px; overflow: hidden; position: relative; border: 1px solid var(--color-border); }
+        .elevation-fill { 
+            height: 100%; background: linear-gradient(90deg, #d4c1a0, var(--color-primary)); 
+            border-radius: 9px; transition: width 0.7s ease-out; position: absolute; top: 0; left: 0; z-index: 2; 
+            display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; font-size: 0.75em;
+            color: var(--color-white); font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        /* 🧭 แถบเมนูนำทางด้านบน (Navbar) */
+        nav { position: fixed; top: 0; left: 0; width: 100%; display: flex; justify-content: center; gap: 30px; padding: 15px 0; background: rgba(66, 48, 14, 0.863); backdrop-filter: blur(8px); z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        nav a { color: #fff; text-decoration: none; font-size: 15px; padding: 10px 18px; border-radius: 25px; transition: 0.3s ease; font-weight: 500; }
+        nav a:hover { background: #d4c1a0; color: #3e2f1f; }
+        @media (max-width: 768px) { nav { flex-wrap: wrap; gap: 10px; padding: 10px 5px; } nav a { font-size: 14px; padding: 8px 14px; } }
+    </style>
+</head>
+<body>
+    
+ <nav>
+    <a href="me000.html">🏠 HOME</a>
+    <a href="me00.html">🙋‍♀️ ALL ME</a>
+    <a href="me01.html">🌍 WHAT IS GEOGRAPHY?</a>
+    <a href="me02.html">🧠 CHANGING THINKING</a>
+    <a href="webmap00.html">🗺️ AGI STUDENT</a>
+    <a href="trip.html">🏞️ HIKING MAPS</a>
+    <a href="miniprojcet.html">🛰️ ALL MAPS</a>
+    </nav>
+    
+    <h1>🌲 แผนที่จุดเดินป่าและธรรมชาติในไทย 🏞️</h1>
+    <p class="note">Marker แสดงระดับความยาก | **ดับเบิลคลิกแผนที่** เพื่อเพิ่มจุดใหม่ | **คลิกเดียว** เพื่อค้นหาใกล้เคียง</p>
+    
+    <div class="filter-panel">
+        <div class="filter-group">
+            <label for="province-filter">📍 จังหวัด:</label>
+            <select id="province-filter" onchange="filterMap()">
+                <option value="all">-- ทุกจังหวัด --</option>
+            </select>
+            <div class="custom-arrow"></div> 
+        </div>
+        
+        <div class="filter-group">
+            <label for="difficulty-filter">💪 ระดับความยาก:</label>
+            <select id="difficulty-filter" onchange="filterMap()">
+                <option value="all">-- ทุกระดับ --</option>
+                <option value="ง่าย">ง่าย (Easy)</option>
+                <option value="ปานกลาง">ปานกลาง (Moderate)</option>
+                <option value="ยาก">ยาก (Hard)</option>
+                <option value="ท้าทาย">ท้าทาย (Challenging)</option>
+            </select>
+            <div class="custom-arrow"></div> 
+        </div>
+
+        <div class="filter-group">
+            <label for="type-filter">🏞️ ประเภท:</label>
+            <select id="type-filter" onchange="filterMap()">
+                <option value="all">-- ทุกประเภท --</option>
+                <option value="ภูเขา/ยอดเขา">ภูเขา/ยอดเขา</option>
+                <option value="น้ำตก">น้ำตก</option>
+                <option value="อุทยานฯ/อื่นๆ">อุทยานฯ/อื่นๆ</option>
+            </select>
+            <div class="custom-arrow"></div> 
+        </div>
+    </div>
+    
+    <div id="map"></div>
+
+<script>
+        // กำหนด URL ของไฟล์ GeoJSON ภายนอก
+        const GEOJSON_FILE_URL = 'hiking.geojson';
+        // **[สำคัญ]** กำหนด URL ของไฟล์ PHP สำหรับ Insert
+        const INSERT_API_URL = 'insert_hiking.php';
+        
+        let hikingSpotsGeoJSON = null; 
+        
+        // [DB Interaction] ตัวแปรสำหรับ Search/Insert
+        let searchResultLayer = null; 
+        let insertLayer = null;      
+        let marker_arr = [];          
+
+        // ค่าคงที่
+        const MAX_ELEVATION_M = 2565; 
+        const START_LAT = 13.7563;
+        const START_LON = 100.5018; 
+        const startPoint = [START_LAT, START_LON]; 
+
+        // สี Marker สำหรับระดับความยาก และ 'brown' สำหรับจุดเริ่มต้น
+        const difficultyColors = { 'ง่าย': 'green', 'ปานกลาง': 'blue', 'ยาก': 'orange', 'ท้าทาย': 'red', 'N/A': 'grey', 'brown': 'brown' };
+
+        // ฟังก์ชันสร้าง Icon (Marker)
+        function createColoredIcon(color) {
+            return L.icon({
+                iconUrl: `https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+            });
+        }
+
+        var map = L.map('map').setView([15.87, 100.99], 6);
+        var geoJsonLayer; 
+
+        // ----------------------------------------------------
+        // [Base Layers]
+        // ----------------------------------------------------
+        var baseLayers = {
+            "🗺️ แผนที่ทั่วไป (OSM)": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }),
+            "🛰️ แผนที่ดาวเทียม (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community' }),
+            "🏔️ แผนที่ภูมิประเทศ (Topo)": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)' })
+        };
+        
+        baseLayers["🗺️ แผนที่ทั่วไป (OSM)"].addTo(map);
+        L.control.layers(baseLayers).addTo(map);
+        
+        // ----------------------------------------------------
+        // [Fixed Layer] จุดเริ่มต้นเป็น Colored Marker Pin (สีน้ำตาล)
+        // ----------------------------------------------------
+        L.marker(startPoint, { 
+            title: "จุดเริ่มต้น: กรุงเทพฯ", 
+            icon: createColoredIcon('brown') // ใช้ฟังก์ชันสร้างไอคอนสีน้ำตาล
+        })
+        .addTo(map)
+        .bindPopup("<b>จุดเริ่มต้น: กรุงเทพมหานคร</b>");
+
+        // ------------------------------------------------
+        // ฟังก์ชันคำนวณระยะทางเส้นตรง (Haversine Formula)
+        // ------------------------------------------------
+        window.calculateDistanceHaversine = function(endLat, endLon, spotName) {
+            
+            const distance_meters = map.distance(startPoint, [endLat, endLon]);
+            const distance_km = (distance_meters / 1000).toFixed(2);
+            
+            const outputId = `distance-${endLat}-${endLon}`.replace(/\./g, '_');
+            const outputDiv = document.getElementById(outputId);
+            
+            if (outputDiv) {
+                outputDiv.innerHTML = `<hr><p><strong>ระยะทางจากต้นทาง (กรุงเทพฯ) ถึง ${spotName}:</strong></p><p class="result-text">${distance_km} กิโลเมตร (เส้นตรง)</p>`;
+            }
+        }
+
+        // ------------------------------------------------
+        // ฟังก์ชันสร้างกราฟิกเปรียบเทียบความสูง 
+        // ------------------------------------------------
+        function getElevationChart(elevation_m) {
+            if (elevation_m === null || isNaN(elevation_m)) {
+                return '<p style="color: grey; font-size: 0.9em; margin-top: 10px;">(ไม่มีข้อมูลความสูงสำหรับการเปรียบเทียบ)</p>';
+            }
+
+            const elevation = parseFloat(elevation_m);
+            const percent = ((elevation / MAX_ELEVATION_M) * 100);
+            const displayPercent = percent.toFixed(0);
+            
+            return `
+                <div class="elevation-chart">
+                    <p style="margin: 0; font-size: 0.9em; font-weight: bold;">เทียบความสูงกับดอยอินทนนท์ (${MAX_ELEVATION_M} ม.)</p>
+                    <div class="elevation-bar">
+                        <div class="elevation-fill" style="width: ${percent}%;">${displayPercent}%</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ------------------------------------------------
+        // ฟังก์ชันแสดงผล GeoJSON (รวมตรรกะ Marker, Chart, และปุ่มคำนวณ)
+        // ------------------------------------------------
+        function displayMapData(data) {
+            if (geoJsonLayer) {
+                map.removeLayer(geoJsonLayer); 
+            }
+
+            if (!data || !data.features || data.features.length === 0) {
+                 console.warn("ไม่พบข้อมูล GeoJSON หรือข้อมูลว่างเปล่า");
+                 return;
+            }
+            
+            // ลบ Error Overlay เก่าออก
+            if (document.getElementById('map').querySelector('.error-overlay')) {
+                document.getElementById('map').querySelector('.error-overlay').remove();
+            }
+
+            geoJsonLayer = L.geoJSON(data, {
+                pointToLayer: function (feature, latlng) {
+                    if (!latlng || isNaN(latlng.lat) || isNaN(latlng.lng)) {
+                         console.error("Marker Skipped: Invalid coordinates found for feature:", feature.properties.name);
+                         return null; 
+                    }
+                    
+                    const difficulty = feature.properties.difficulty || 'N/A';
+                    const color = difficultyColors[difficulty] || 'grey';
+                    
+                    const marker = L.marker(latlng, { icon: createColoredIcon(color) });
+
+                    const elevation_m = feature.properties.elevation_m;
+                    const elevationChartHtml = getElevationChart(elevation_m);
+
+                    const outputId = `distance-${latlng.lat}-${latlng.lng}`.replace(/\./g, '_');
+                    const safeName = feature.properties.name.replace(/'/g, "\\'");
+                    
+                    const popupContent = `
+                        <h3>${feature.properties.name}</h3>
+                        <p><strong>จังหวัด:</strong> ${feature.properties.province}</p>
+                        <p><strong>ความสูง:</strong> ${elevation_m !== null ? elevation_m + ' ม.' : 'N/A'}</p>
+                        <p><strong>ระดับความยาก:</strong> ${difficulty} | <strong>ประเภท:</strong> ${feature.properties.type}</p>
+                        
+                        <hr style="margin: 8px 0; border-top: 1px solid #d8d8d8;">
+                        <h4>📜 ประวัติโดยย่อ:</h4>
+                        <p style="font-size: 0.95em; color: #555;">${feature.properties.history || 'ไม่มีข้อมูลประวัติย่อ'}</p>
+                        
+                        <h4>📢 คำเชิญชวน:</h4>
+                        <p class="invite-text">"${feature.properties.invite || 'ไม่มีคำเชิญชวน'}"</p>
+
+                        ${elevationChartHtml} 
+                        
+                        <button onclick="calculateDistanceHaversine(${latlng.lat}, ${latlng.lng}, '${safeName}')">คำนวณระยะทางเส้นตรง</button>
+                        <div id="${outputId}"></div>
+                    `;
+
+                    marker.bindPopup(popupContent);
+                    return marker;
+                }
+            }).addTo(map);
+            
+            if (geoJsonLayer.getLayers().length > 0) {
+                 map.fitBounds(geoJsonLayer.getBounds(), { padding: [20, 20] });
+            }
+        }
+
+        // ------------------------------------------------
+        // ฟังก์ชันตัวกรอง
+        // ------------------------------------------------
+        function filterMap() {
+            if (!hikingSpotsGeoJSON) return; 
+            
+            const selectedProvince = document.getElementById('province-filter').value;
+            const selectedDifficulty = document.getElementById('difficulty-filter').value;
+            const selectedType = document.getElementById('type-filter').value;
+            
+            const filteredFeatures = hikingSpotsGeoJSON.features.filter(feature => {
+                const provinceMatch = selectedProvince === 'all' || feature.properties.province.includes(selectedProvince);
+                const difficultyMatch = selectedDifficulty === 'all' || feature.properties.difficulty === selectedDifficulty;
+                const typeMatch = selectedType === 'all' || feature.properties.type === selectedType;
+
+                return provinceMatch && difficultyMatch && typeMatch;
+            });
+
+            const filteredGeoJSON = { type: 'FeatureCollection', features: filteredFeatures };
+            displayMapData(filteredGeoJSON);
+        }
+
+        // ------------------------------------------------
+        // ฟังก์ชันเริ่มต้น (รวมการสร้างตัวเลือกจังหวัดและ Legend)
+        // ------------------------------------------------
+        function initializeMapControls() {
+            // 1. สร้างตัวเลือกจังหวัด
+            const provinces = [...new Set(hikingSpotsGeoJSON.features.map(f => f.properties.province))].sort();
+            const provinceFilter = document.getElementById('province-filter');
+            
+            provinces.forEach(province => {
+                const option = document.createElement('option');
+                option.value = province;
+                option.textContent = province;
+                provinceFilter.appendChild(option);
+            });
+
+            // 2. แสดงข้อมูลครั้งแรก
+            displayMapData(hikingSpotsGeoJSON);
+            
+            // 3. สร้าง Legend
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function (map) {
+                const div = L.DomUtil.create('div', 'info legend');
+                
+                // Legend สำหรับจุดเริ่มต้น
+                const startLegend = `
+                    <p style="margin: 0; font-weight: 600; color: var(--color-primary);">
+                        <i style="background:brown; border: 1px solid #777;"></i> จุดเริ่มต้น (กรุงเทพฯ)
+                    </p>
+                    <hr style="margin: 8px 0; border: none; border-top: 1px dashed #ddd;">
+                `;
+
+                // Legend สำหรับระดับความยาก
+                const difficultyLegend = `
+                    <h4>ระดับความยาก</h4>
+                    <p style="margin: 0;">
+                        ${['ง่าย', 'ปานกลาง', 'ยาก', 'ท้าทาย'].map(d => 
+                            `<i style="background:${difficultyColors[d]}"></i> ${d}`
+                        ).join('<br>')}
+                    </p>
+                `;
+                
+                div.innerHTML = startLegend + difficultyLegend;
+                return div;
+            };
+            legend.addTo(map);
+        }
+
+        // ------------------------------------------------
+        // [DB Interaction] ฟังก์ชัน Search (Global Scope)
+        // ------------------------------------------------
+        window.sendtodb = function() { 
+            // ฟังก์ชันนี้จะใช้ในการค้นหาสถานที่ใน GeoJSON ที่อยู่ใกล้จุดที่คลิก
+            
+            if (searchResultLayer) map.removeLayer(searchResultLayer);
+            
+            // ใช้ jQuery Selector ภายใน DOM เพื่อดึงค่าที่อยู่ภายใน Popup
+            const lat = parseFloat($('input#lat').val());
+            const lng = parseFloat($('input#lng').val());
+            const distance_km = parseFloat($('input#distance').val());
+            
+            // ตรวจสอบค่า
+            if (isNaN(lat) || isNaN(lng) || isNaN(distance_km)) {
+                 alert("กรุณากรอกค่า Lat, Lng และ Distance ให้ถูกต้อง");
+                 return;
+            }
+
+            const searchCenter = L.latLng(lat, lng);
+            const filteredFeatures = hikingSpotsGeoJSON.features.filter(feature => {
+                const featureLat = feature.geometry.coordinates[1];
+                const featureLng = feature.geometry.coordinates[0];
+                const featureLatLng = L.latLng(featureLat, featureLng);
+
+                // คำนวณระยะทางแบบเส้นตรงระหว่างจุดที่คลิกกับ Feature (เป็นเมตร)
+                const distance_m = map.distance(searchCenter, featureLatLng);
+                const distance_km_to_feature = distance_m / 1000;
+                
+                // กรอง Feature ที่อยู่ในรัศมีที่กำหนด
+                return distance_km_to_feature <= distance_km;
+            });
+            
+            const searchGeoJSON = { type: 'FeatureCollection', features: filteredFeatures };
+
+            // แสดงผลลัพธ์
+            searchResultLayer = L.geoJSON(searchGeoJSON, { 
+                pointToLayer: function (feature, latlng) {
+                    const distance_m = map.distance(searchCenter, latlng);
+                    const distance_km_to_feature = (distance_m / 1000).toFixed(2);
+                    
+                    // ใช้ Marker Pin สีฟ้าสำหรับผลลัพธ์ Search
+                    const marker = L.marker(latlng, { icon: createColoredIcon('blue') }); 
+                    
+                    const p = feature.properties;
+                    marker.bindPopup(`
+                        <h4>🔍 ผลการค้นหาใกล้เคียง</h4>
+                        <p><b>ชื่อ:</b> ${p.name}</p>
+                        <p><b>ระยะห่างจากจุดคลิก:</b> <span style="color:red; font-weight:bold;">${distance_km_to_feature} km</span></p>
+                        <p><b>จังหวัด:</b> ${p.province} | <b>ความยาก:</b> ${p.difficulty}</p>
+                    `);
+                    return marker;
+                }
+            }).addTo(map);
+
+            // แสดงขอบเขตการค้นหา (วงกลม)
+            L.circle(searchCenter, { radius: distance_km * 1000, color: 'red', fillColor: '#f03', fillOpacity: 0.1, weight: 1.5 }).addTo(map);
+            
+            // ซูมไปที่ขอบเขตของผลลัพธ์
+            if (searchResultLayer.getLayers().length > 0) {
+                 map.fitBounds(searchResultLayer.getBounds().pad(0.1), { padding: [20, 20] });
+            } else {
+                 alert(`ไม่พบสถานที่เดินป่าในรัศมี ${distance_km} km`);
+            }
+
+            // ล้าง Marker ชั่วคราวที่สร้างตอนคลิก (Marker วางไว้ตรงกลางวงกลม)
+            marker_arr.forEach(m => map.removeLayer(m));
+            marker_arr = [];
+        }
+
+
+        // ------------------------------------------------
+        // **[การแก้ไข]** ฟังก์ชัน Insert Data (Global Scope)
+        // ------------------------------------------------
+        window.inserttodb = function() { 
+            const lat = parseFloat($('input#lat_insert').val());
+            const lng = parseFloat($('input#lng_insert').val());
+            const name = $('input#name_insert').val().trim();
+            
+            // **[เพิ่ม]** ดึงค่าจังหวัดและความสูง
+            const province = $('input#province_insert').val().trim();
+            const elevation_m = $('input#elevation_m_insert').val().trim(); // รับเป็น string เพื่อให้ PHP จัดการ NULL/ตัวเลข
+            
+            // ตรวจสอบค่าที่จำเป็น
+            if (isNaN(lat) || isNaN(lng) || name === '') {
+                alert("กรุณากรอกค่า Lat, Lng และ ชื่อสถานที่ ให้ถูกต้อง");
+                return;
+            }
+
+            // สร้าง Data Object สำหรับส่งไป PHP
+            const dataToSend = { 
+                lat: lat, 
+                lng: lng, 
+                name: name,
+                province: province,
+                elevation_m: elevation_m 
+            };
+
+            // ส่งข้อมูลไปยังไฟล์ PHP
+            $.ajax({
+                url: INSERT_API_URL, 
+                type: 'GET',
+                data: dataToSend, // ใช้ Data Object ใหม่
+                dataType: 'json',
+                success: function(response) {
+                    if (response && response.error) {
+                        alert("ERROR: " + response.error);
+                        console.error("Insert Error Response:", response.error);
+                    } else {
+                        alert(`บันทึกจุดเดินป่าใหม่: "${name}" สำเร็จ!\n(พิกัด: ${lat.toFixed(6)}, ${lng.toFixed(6)})`);
+                        // ******* หลังบันทึกสำเร็จ ควรเรียกฟังก์ชันโหลดข้อมูลใหม่ (reload) เพื่อให้จุดใหม่ปรากฏบนแผนที่ *******
+                        // window.location.reload(); 
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert("เกิดข้อผิดพลาดในการเชื่อมต่อ/บันทึกข้อมูล: " + error);
+                    console.error("AJAX Error:", status, error, xhr.responseText);
+                }
+            });
+
+            // ปิด Popup หลังส่งข้อมูล
+            map.closePopup();
+            marker_arr.forEach(m => map.removeLayer(m));
+            marker_arr = [];
+        }
+
+        // ------------------------------------------------
+        // [DB Interaction] Leaflet Listeners (Search/Insert)
+        // ------------------------------------------------
+        map.on("click", function (e) {
+            // ล้างผลลัพธ์ Search ก่อนหน้า
+            if (searchResultLayer) map.removeLayer(searchResultLayer);
+
+            marker_arr.forEach(m => map.removeLayer(m)); marker_arr = [];
+            
+            var ct = "<center><h3>Search Nearby Hiking Spots</h3></center>";
+            ct += "<label for='lat'>Lat:</label> <input type='number' id='lat' value='" + e.latlng.lat.toFixed(6) + "' readonly><br>";
+            ct += "<label for='lng'>Lng:</label> <input type='number' id='lng' value='" + e.latlng.lng.toFixed(6) + "' readonly><br>";
+            ct += "<label for='distance'>Radius (km):</label> <input type='number' id='distance' value='100' required><br><br>";
+            ct += "<center><button onclick='sendtodb();'>Search GeoJSON</button></center>"; 
+            
+            // Marker Pin กลางวงกลม
+            var marker = L.marker([e.latlng.lat, e.latlng.lng], { icon: createColoredIcon('blue') }).addTo(map).bindPopup(ct).openPopup();
+            marker_arr.push(marker);
+        });
+
+        map.on("dblclick", function (e) {
+            // ฟังก์ชัน Insert Data
+            marker_arr.forEach(m => map.removeLayer(m)); marker_arr = [];
+            var ct = "<center><h3>➕ เพิ่มตำแหน่งใหม่</h3></center>";
+            ct += "<label for='lat_insert'>Lat:</label> <input type='number' id='lat_insert' value='" + e.latlng.lat.toFixed(6) + "' readonly><br>";
+            ct += "<label for='lng_insert'>Lng:</label> <input type='number' id='lng_insert' value='" + e.latlng.lng.toFixed(6) + "' readonly><br>";
+            ct += "<label for='name_insert'>ชื่อสถานที่:</label> <input type='text' id='name_insert'><br>";
+            
+            // **[เพิ่ม]** Input fields สำหรับ จังหวัดและความสูง
+            ct += "<label for='province_insert'>จังหวัด:</label> <input type='text' id='province_insert'><br>";
+            ct += "<label for='elevation_m_insert'>ความสูง (ม.):</label> <input type='number' id='elevation_m_insert'><br><br>";
+            
+            ct += "<center><button onclick='inserttodb();'>บันทึกข้อมูล</button></center>"; 
+            var marker1 = L.marker([e.latlng.lat, e.latlng.lng], { icon: createColoredIcon('violet') }).addTo(map).bindPopup(ct).openPopup();
+            marker_arr.push(marker1);
+        });
+
+        map.doubleClickZoom.disable(); 
+
+        // ------------------------------------------------
+        // [CORE CHANGE] ดึงข้อมูล GeoJSON จากไฟล์ภายนอก
+        // ------------------------------------------------
+        $(document).ready(function() {
+             $.getJSON(GEOJSON_FILE_URL, function(data) {
+                 hikingSpotsGeoJSON = data; 
+                 initializeMapControls(); 
+             })
+             .fail(function(jqxhr, textStatus, error) {
+                 const err = textStatus + ", " + error;
+                 console.error("การโหลด GeoJSON ล้มเหลว: " + err);
+                 alert("ไม่สามารถโหลดไฟล์ GeoJSON ได้ กรุณาตรวจสอบไฟล์: " + GEOJSON_FILE_URL);
+             });
+        });
+
+</script> 
+</body>
+</html>

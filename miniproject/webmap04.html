@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>กราฟเปรียบเทียบจังหวัดที่จบนักเรียน</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap" rel="stylesheet" />
+  <style>
+   body {
+        margin: 0;
+        font-family: 'Prompt', sans-serif;
+        background: linear-gradient(135deg, #f9f7f1, #e8e3d9);
+        padding: 30px 20px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        overflow-y: auto;
+        color: #5a4a1a;
+        box-sizing: border-box;
+    }
+
+    .chart-wrapper {
+        background: #fff;
+        padding: 30px 40px;
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(101, 85, 42, 0.2);
+        max-width: 700px;
+        width: 100%;
+        text-align: center;
+    }
+    
+    h3 {
+        font-weight: 700;
+        font-size: 1.8rem;
+        margin-bottom: 25px;
+        color: #6b5832;
+        user-select: none;
+    }
+
+    canvas {
+        max-width: 100%;
+        border-radius: 20px;
+        background: #faf6f0;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(101, 85, 42, 0.12);
+    }
+
+    canvas#deptChart {
+        width: 100% !important;
+        height: auto !important; 
+        max-height: none;
+        min-height: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-wrapper">
+    <h3>📍 เปรียบเทียบจังหวัดที่นักศึกษาจบการศึกษาระดับมัธยม</h3>
+    <canvas id="deptChart"></canvas>
+  </div>
+
+  <script>
+    let deptChart;
+    
+    // ฟังก์ชัน: ดึงข้อมูล GeoJSON จาก PHP
+    async function fetchGeoJSON(keyword = '') {
+        const encodedKeyword = encodeURIComponent(keyword);
+        const url = `agi65.php?type=keyword&value=${encodedKeyword}`; 
+        try {
+            const response = await fetch(url);
+            return await response.json(); 
+        } catch (error) {
+            console.error("Error fetching data for charts:", error);
+            return { features: [] };
+        }
+    }
+
+    // รายชื่อจังหวัด (ใช้สำหรับการเช็คชื่อให้ถูกต้อง)
+    const provinceList = [
+      "กระบี่", "กรุงเทพมหานคร", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร",
+      "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท",
+      "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง",
+      "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม",
+      "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส",
+      "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์",
+      "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา",
+      "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์",
+      "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน",
+      "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง",
+      "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย",
+      "ศรีสะเกษ", "สกลนคร", "สงขลา", "สมุทรสาคร", "สมุทรปราการ",
+      "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี",
+      "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย",
+      "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์",
+      "อุทัยธานี", "อุบลราชธานี"
+    ];
+
+    // ฟังก์ชันแก้ชื่อจังหวัดให้ตรงกับรายชื่อจังหวัด
+    function fixProvinceName(name) {
+      if (!name) return "ไม่ระบุ";
+      const cleanName = name.trim();
+
+      for (const province of provinceList) {
+        if (cleanName.includes(province)) {
+          return province;
+        }
+      }
+      return cleanName || "ไม่ระบุ"; 
+    }
+
+    // ฟังก์ชันอัปเดตกราฟ โดยดึงข้อมูลจริง
+    async function updateDeptChart(keyword = '') {
+      const liveGeojson = await fetchGeoJSON(keyword);
+      const filtered = liveGeojson.features;
+
+      // สร้างอ็อบเจกต์นับจำนวนจังหวัดจริงๆ
+      const provinceCounts = {};
+      filtered.forEach(f => {
+        const provinceRaw = f.properties.province || "ไม่ระบุ"; 
+        const province = fixProvinceName(provinceRaw);
+        if (!provinceCounts[province]) {
+          provinceCounts[province] = 0;
+        }
+        provinceCounts[province]++;
+      });
+
+      // ปรับความสูง canvas ตามจำนวนจังหวัดจริง
+      const canvas = document.getElementById('deptChart');
+      const countProvinces = Object.keys(provinceCounts).length;
+      canvas.style.height = (countProvinces * 25 + 100) + 'px';
+
+      if (deptChart) deptChart.destroy();
+
+      // สร้างกราฟใหม่
+      deptChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(provinceCounts),
+          datasets: [{
+            label: 'จำนวนนักศึกษา',
+            data: Object.values(provinceCounts),
+            backgroundColor: '#bfa77a',
+            borderRadius: 6,
+            barPercentage: 0.6,
+            categoryPercentage: 0.6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                font: { family: 'Prompt', size: 14 },
+                color: '#5a4a1a'
+              },
+              grid: {
+                color: '#e4d9bb',
+                drawBorder: false
+              }
+            },
+            y: {
+              ticks: {
+                font: { family: 'Prompt', size: 14 },
+                color: '#5a4a1a',
+                autoSkip: false 
+              },
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              backgroundColor: '#6b5832',
+              titleFont: { family: 'Prompt', weight: 'bold' },
+              bodyFont: { family: 'Prompt' },
+              padding: 10,
+              cornerRadius: 8
+            }
+          }
+        }
+      });
+    }
+
+    // ฟังชั่นรับข้อมูลจาก iframe หรือหน้าอื่น
+    window.addEventListener("message", (e) => {
+      const keyword = e.data.keyword || '';
+      updateDeptChart(keyword);
+    });
+
+    // แสดงกราฟครั้งแรก
+    updateDeptChart('');
+  </script>
+</body>
+</html>

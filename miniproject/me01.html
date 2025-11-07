@@ -1,0 +1,267 @@
+<!DOCTYPE html> <!-- ประกาศเอกสาร HTML5 -->
+<html lang="th"> <!-- กำหนดภาษาเป็นไทย -->
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What is Geography?</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Prompt', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(to bottom right, #3d2c20, #d7ccc8);
+      color: #4e342e;
+      padding: 130px 20px 60px; /* เผื่อพื้นที่สำหรับ Navbar และ Footer */
+    }
+
+    /* ✅ NAVIGATION BAR */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      padding: 15px 0;
+      z-index: 999;
+      backdrop-filter: blur(8px);
+    }
+
+    nav a {
+      color: #f5f5f5;
+      text-decoration: none;
+      font-size: 16px;
+      padding: 8px 16px;
+      border-radius: 30px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    nav a:hover {
+      background: #c9bba0;
+      color: #2d2419;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #efebe9;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #5d4037;
+      margin-bottom: 30px;
+    }
+
+    .image-box {
+      text-align: center;
+    }
+
+    .image-box img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 25px;
+    }
+
+    p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: #5d4037;
+      text-align: justify;
+    }
+
+    .work-gallery {
+      margin-top: 50px;
+      padding-top: 30px;
+      border-top: 3px solid #bcaaa4;
+    }
+
+    .work-gallery h2 {
+      text-align: center;
+      color: #4e342e;
+      margin-bottom: 20px;
+    }
+
+    .gallery-images {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .image-wrapper {
+      position: relative;
+      width: 150px;
+      overflow: hidden;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-wrapper img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      transition: transform 0.3s ease;
+      display: block;
+    }
+
+    .image-wrapper:hover img {
+      transform: scale(1.05);
+    }
+
+    .overlay-text {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      padding: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+    }
+
+    .image-wrapper:hover .overlay-text {
+      opacity: 1;
+    }
+
+    .button-group {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .back-btn,
+    .next-btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 20px;
+      color: white;
+      text-decoration: none;
+      border-radius: 30px;
+      transition: background 0.3s ease;
+    }
+
+    .back-btn {
+      background: #8d6e63;
+    }
+
+    .back-btn:hover {
+      background: #6d4c41;
+    }
+
+    .next-btn {
+      background: #6d4c41;
+      margin-left: 15px;
+    }
+
+    .next-btn:hover {
+      background: #4e342e;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      font-size: 14px;
+      color: #ffffff;
+      opacity: 0.6;
+      text-align: right;
+      z-index: 998;
+    }
+
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .gallery-images {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ✅ NAVIGATION BAR -->
+<nav>
+    <a href="me000.html">🏠 HOME</a>
+    <a href="me00.html">🙋‍♀️ ALL ME</a>
+    <a href="me01.html">🌍 WHAT IS GEOGRAPHY?</a>
+    <a href="me02.html">🧠 CHANGING THINKING</a>
+    <a href="webmap00.html">🗺️ AGI STUDENT</a>
+    <a href="trip.html">🏞️ HIKING MAPS</a>
+    <a href="miniprojcet.html">🛰️ ALL MAPS</a>
+    </nav>
+
+  <!-- ✅ CONTENT -->
+  <div class="container">
+    <h1>ภูมิศาสตร์และภูมิสารสนเทศ</h1>
+
+    <div class="image-box">
+      <img src="คณะ.jpg" alt="ภาพตัวอย่างคณะ">
+    </div>
+
+    <p>
+      คณะภูมิศาสตร์เป็นการศึกษาที่มุ่งเน้นการเรียนรู้เกี่ยวกับความสัมพันธ์ระหว่างมนุษย์กับสิ่งแวดล้อมทั้งในด้านกายภาพและมนุษย์ โดยใช้กระบวนการวิเคราะห์เชิงพื้นที่เป็นหลัก วิชาที่เรียนจะครอบคลุมทั้งภูมิศาสตร์กายภาพ (เช่น ดิน น้ำ ภูมิอากาศ ธรณีวิทยา) และภูมิศาสตร์มนุษย์ (เช่น ประชากร เมือง เศรษฐกิจ การใช้ที่ดิน) พร้อมทั้งเน้นการใช้เทคโนโลยีภูมิสารสนเทศ เช่น ระบบสารสนเทศภูมิศาสตร์ (GIS) การสำรวจด้วยดาวเทียม (Remote Sensing) การทำแผนที่ (Cartography) และการวิเคราะห์ข้อมูลเชิงพื้นที่ (Spatial Analysis) เพื่อนำไปประยุกต์ใช้ในงานวางแผน การจัดการทรัพยากรธรรมชาติ สิ่งแวดล้อม เมือง และการพัฒนาที่ยั่งยืน คณะนี้เหมาะกับผู้ที่สนใจเรื่องแผนที่ ธรรมชาติ เทคโนโลยี และการวิเคราะห์ข้อมูลพื้นที่เพื่อแก้ไขปัญหาต่าง ๆ ในโลกจริง
+
+    </p>
+
+    <!-- กิจกรรม -->
+    <div class="work-gallery">
+      <h2>กิจกรรมที่ได้ทำเมื่อมาเรียนภูมิศาสตร์</h2>
+      <div class="gallery-images">
+        <div class="image-wrapper">
+          <img src="ค่ายภูหิน.jpg" alt="งานที่ 1">
+          <div class="overlay-text">เข้าค่ายที่ภูหินร่องกล้า</div>
+        </div>
+
+        <div class="image-wrapper">
+          <img src="ร่วมกิจกรรมที่ศรีเทพ.jpg" alt="งานที่ 2">
+          <div class="overlay-text">กิจกรรมโบราณสถานที่ศรีเทพ</div>
+        </div>
+
+        <div class="image-wrapper">
+          <img src="ภาพเซอร์เวย์.jpg" alt="งานที่ 3">
+          <div class="overlay-text">สำรวจพื้นที่จริงด้วยการใช้เครื่องมือทางภูมิศาสตร์</div>
+        </div>
+
+        <div class="image-wrapper">
+          <img src="ภาพเวิร์คช็อป.jpg" alt="งานที่ 4">
+          <div class="overlay-text">เข้าร่วมเวิร์คช็อปการใช้โดรนในการเก็บข้อมูล</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ปุ่มนำทาง -->
+    <div class="button-group">
+      <a href="me00.html" class="back-btn">← ย้อนกลับ</a>
+      <a href="me02.html" class="next-btn">ต่อไป →</a>
+    </div>
+  </div>
+
+  
+
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>📚 ระบบข้อมูลนักศึกษาและแผนที่</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+    <style>
+        /* 🎨 ตั้งค่าพื้นฐานของ body */
+        body {
+            margin: 0;
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, #fefefb 0%, #e9e2d7 50%, #f5e9d9 100%); 
+            animation: gradientShift 20s infinite alternate;
+            overflow: hidden; 
+        }
+
+        /* 🧱 Container หลักที่จัด Layout แบบ Grid */
+        .grid-container {
+            display: grid; 
+            grid-template-columns: 1fr 4fr; /* ⬅️ ปรับแผนที่ให้ยาวขึ้น (83.33%) */
+            grid-template-rows: 100%; 
+            gap: 20px; 
+            padding: 20px; 
+            margin-top: 85px; 
+            height: calc(100vh - 85px); 
+            box-sizing: border-box;
+            animation: fadeIn 1s ease-out;
+        }
+
+        /* 🖼️ สไตล์ของ iframe และ Map */
+        #map {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 20px; 
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+        }
+        
+        #map:hover {
+            transform: translateY(-5px); 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08); 
+        }
+        
+        /* 💡 Iframe Wrapper สำหรับ Title Overlay */
+        .iframe-wrapper {
+            position: relative;
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .iframe-wrapper:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+        }
+
+        /* 💡 Title Overlay บน iframe */
+        .iframe-title {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(90deg, #918177, #63594f); 
+            color: white;
+            padding: 12px 20px;
+            font-weight: 700;
+            font-size: 16px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            z-index: 100;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+
+        /* 💡 ปรับตำแหน่ง iframe ให้อยู่ใต้ Title Overlay */
+        #iframeMenu {
+            position: relative;
+            top: 45px; 
+            height: calc(100% - 45px);
+            border-radius: 0; 
+            box-shadow: none; 
+            transition: none;
+        }
+        
+        /* จัดตำแหน่งใน Grid (คงเดิม) */
+        #map {
+            grid-column: 2 / 3; 
+            grid-row: 1 / 2; 
+            z-index: 10;
+        }
+
+        /* 🧭 แถบเมนูนำทางด้านบน (Navbar - คงเดิม) */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding: 15px 0;
+            background: rgba(40, 30, 10, 0.9);
+            backdrop-filter: blur(10px) saturate(180%);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            animation: slideDown 0.8s ease-out;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 15px;
+            padding: 10px 18px;
+            border-radius: 25px;
+            transition: all 0.3s ease; 
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        nav a:hover {
+            background: #f0c37f;
+            color: #2d1e0a;
+            box-shadow: 0 0 10px #f0c37f, 0 2px 5px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05); 
+        }
+
+        /* 💡 Style สำหรับ Leaflet Controls */
+        .leaflet-control-container .leaflet-control {
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+        .leaflet-control-zoom-in, .leaflet-control-zoom-out, .leaflet-control-layers-toggle {
+            border-radius: 8px !important;
+        }
+        .leaflet-popup-content-wrapper, .leaflet-tooltip {
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-family: 'Prompt', sans-serif;
+        }
+        .leaflet-popup-content b {
+            color: #80795b;
+        }
+
+
+        /* 📱 Responsive (คงเดิม) */
+        @media (max-width: 768px) {
+            .grid-container {
+                display: flex;
+                flex-direction: column;
+                margin-top: 130px; 
+                height: auto;
+            }
+
+            .iframe-wrapper, #map {
+                height: 300px;
+                margin-bottom: 15px;
+            }
+
+            nav {
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 10px 5px;
+            }
+
+            nav a {
+                font-size: 14px;
+                padding: 8px 14px;
+            }
+        }
+
+        /* Custom Star Icon CSS (ไม่มีเงา) */
+        .custom-star-icon .fa-star {
+            color: #ff4e6c;
+            font-size: 18px; 
+        }
+
+        /* 🪄 Animation Keyframes (คงเดิม) */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+    <a href="me000.html">🏠 HOME</a>
+    <a href="me00.html">🙋‍♀️ ALL ME</a>
+    <a href="me01.html">🌍 WHAT IS GEOGRAPHY?</a>
+    <a href="me02.html">🧠 CHANGING THINKING</a>
+    <a href="webmap00.html">🗺️ AGI STUDENT</a>
+    <a href="trip.html">🏞️ HIKING MAPS</a>
+    <a href="miniprojcet.html">🛰️ ALL MAP</a>
+    </nav>
+
+    <div class="grid-container">
+        <div class="iframe-wrapper">
+            <div class="iframe-title">🔍 ข้อมูลนักศึกษาและตัวกรอง</div>
+            <iframe src="search.html" id="iframeMenu"></iframe>
+        </div>
+        
+        <div id="map"></div>
+    </div>
+
+    <script>
+        // *** 1. MAP AND LAYER SETUP ***
+        // ปรับ Zoom Level เป็น 6 เพื่อซูมเข้าประเทศไทยมากขึ้น
+        var map = L.map("map").setView([15.5, 100.3], 6); 
+        var agiLayer = null; 
+        var provinceLayer = null; 
+        
+        // **กำหนดชื่อไฟล์ GeoJSON ของขอบเขตจังหวัด**
+        const PROVINCE_GEOJSON_FILE = "thailand_province.geojson";
+        // **กำหนดชื่อ Property ที่เก็บชื่อจังหวัด (ภาษาไทย) ในไฟล์ GeoJSON**
+        const PROVINCE_NAME_PROP = 'prov_nam_t'; 
+
+        // --- Base Layers (โค้ดเดิม) ---
+        var baseLayers = {
+            "🗺️ แผนที่ทั่วไป (OSM)": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }),
+            "🛰️ แผนที่ดาวเทียม (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }),
+            "🏔️ แผนที่ภูมิประเทศ (Topo)": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: 'Map data © OpenTopoMap contributors' })
+        };
+        baseLayers["🗺️ แผนที่ทั่วไป (OSM)"].addTo(map);
+
+        // *** ไม่มีการกำหนด overlayLayers และ L.control.layers เพื่อลบ WMS Map ออก ***
+        L.control.layers(baseLayers).addTo(map); // ⬅️ เหลือแค่ Base Layers
+
+        // --- Custom Icon (ใช้ CSS จัดการ Style) ---
+        var StarIcon = L.divIcon({
+            className: 'custom-star-icon',
+            html: '<i class="fa-solid fa-star"></i>', 
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        // *** 2. SEARCH DATA SETUP ***
+        var uniqueData = { 'faculty': [], 'curriculum': [], 'province': [] };
+        // ข้อมูลตัวอย่างสำหรับ Autocomplete
+        const autocompleteData = ["6716", "ณัฐนิติ", "ธรรมรัตน์", "ภูมิศาสตร์", "พิษณุโลก", "นครสวรรค์", "วิทยาศาสตร์การเกษตร", "คณะเกษตรศาสตร์"];
+
+        // *** 3. CORE FUNCTIONS ***
+
+        function normalizeProvinceName(name) {
+            if (!name) return '';
+            let cleanedName = name.trim();
+            if (cleanedName.startsWith('จ.')) {
+                cleanedName = cleanedName.substring(2).trim();
+            }
+            if (cleanedName.startsWith('จังหวัด')) {
+                cleanedName = cleanedName.substring(7).trim();
+            }
+            return cleanedName;
+        }
+
+        function getProvinceNameFromFeature(feature) {
+            const rawName = feature.properties[PROVINCE_NAME_PROP];
+            return normalizeProvinceName(rawName);
+        }
+
+        function updateResultCount(count) {
+            const iframe = document.getElementById('iframeMenu');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'updateCount', count: count }, '*');
+            }
+        }
+
+        /**
+         * ฟังก์ชันสำหรับอัปเดต Dropdown ใน search.html (โค้ดเดิม)
+         */
+        function updateDropdown(dropdownId, category) {
+            const iframe = document.getElementById('iframeMenu'); 
+            if (!iframe || !iframe.contentWindow) return;
+            
+            const dropdown = iframe.contentWindow.document.getElementById(dropdownId);
+            const data = uniqueData[category] || []; 
+
+            dropdown.innerHTML = '';
+            
+            let defaultOption = iframe.contentWindow.document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = `เลือก${category === 'curriculum' ? 'หลักสูตร' : category === 'faculty' ? 'คณะ' : 'จังหวัด'}`;
+            dropdown.appendChild(defaultOption);
+
+            data.forEach(item => {
+                let option = iframe.contentWindow.document.createElement('option');
+                option.value = item;
+                option.textContent = item;
+                dropdown.appendChild(option);
+            });
+            
+            dropdown.style.display = (category && data.length > 0) ? 'inline-block' : 'none';
+            dropdown.value = '';
+        }
+
+        function loadProvinceBoundaries(provincesToHighlight, studentLayer) {
+            if (provinceLayer) {
+                map.removeLayer(provinceLayer);
+            }
+            
+            function style(feature) {
+                return {
+                    fillColor: '#800026', 
+                    weight: 3, 
+                    opacity: 1,
+                    color: '#c2185b', 
+                    dashArray: '5',
+                    fillOpacity: 0.15
+                };
+            }
+            
+            function filterProvinces(feature) {
+                const normalizedProvinceName = getProvinceNameFromFeature(feature); 
+                return provincesToHighlight.includes(normalizedProvinceName);
+            }
+            
+            provinceLayer = new L.GeoJSON.AJAX(PROVINCE_GEOJSON_FILE, { 
+                style: style,
+                filter: filterProvinces, 
+                onEachFeature: function (feature, layer) {
+                    layer.bindTooltip(getProvinceNameFromFeature(feature), { permanent: false, direction: 'auto' });
+                }
+            });
+
+            provinceLayer.addTo(map);
+            
+            if (provincesToHighlight.length > 0) {
+                provinceLayer.on('data:loaded', function() {
+                    let bounds = null;
+                    const studentBounds = studentLayer.getBounds();
+                    const provinceBounds = provinceLayer.getBounds();
+                    
+                    if (studentBounds.isValid() && provinceBounds.isValid()) {
+                        bounds = studentBounds.extend(provinceBounds);
+                    } else if (studentBounds.isValid()) {
+                        bounds = studentBounds;
+                    } 
+
+                    if (bounds && bounds.isValid()) {
+                        map.fitBounds(bounds, { padding: [30, 30] });
+                    }
+                });
+            }
+        }
+
+        function loadGeoJSON(url) {
+            if (agiLayer) {
+                map.removeLayer(agiLayer);
+            }
+            if (provinceLayer) {
+                map.removeLayer(provinceLayer);
+            }
+
+            let foundProvinces = new Set();
+            
+            agiLayer = new L.GeoJSON.AJAX(url, {
+                pointToLayer: function (feature, latlng) {
+                    return L.marker(latlng, { icon: StarIcon });
+                },
+                onEachFeature: function (feature, layer) {
+                    const p = feature.properties;
+                    if (p) {
+                        foundProvinces.add(normalizeProvinceName(p.province)); 
+                        
+                        layer.bindPopup(
+                            "<b>ID:</b> " + p.s_id + "<br>" +
+                            "<b>Name:</b> " + p.s_name + "<br>" +
+                            "<b>Faculty:</b> " + p.faculty + "<br>" +
+                            "<b>Curriculum:</b> " + p.curriculum + "<br>" +
+                            "<b>Province:</b> " + p.province
+                        );
+                    }
+                }
+            });
+
+            agiLayer.addTo(map);
+
+            agiLayer.on('data:loaded', function() {
+                const count = agiLayer.getLayers().length;
+                updateResultCount(count); 
+                loadProvinceBoundaries(Array.from(foundProvinces), agiLayer);
+                
+                if (count === 0) {
+                    map.setView([15.5, 100.3], 7); 
+                }
+            });
+            
+            agiLayer.on('loading', function() {
+                updateResultCount('กำลังโหลด...');
+            });
+        }
+        
+        /**
+         * ฟังก์ชันสำหรับอัปเดต Autocomplete (ปรับปรุงให้ใช้ postMessage)
+         */
+        function updateAutocomplete(data) {
+            const iframe = document.getElementById('iframeMenu');
+            if (!iframe || !iframe.contentWindow) return;
+            
+            // ส่งข้อมูลไปยัง iframeMenu
+            iframe.contentWindow.postMessage({ type: 'autocomplete', data: data }, '*');
+        }
+
+
+        /**
+         * ฟังก์ชันสำหรับดึงข้อมูล unique values และส่งไปยัง search.html เพื่อเริ่มต้น Dropdown (ปรับปรุงการส่ง Autocomplete Data)
+         */
+        function fetchUniqueValues() {
+            // ข้อมูลจำลอง (Mock data)
+            uniqueData = {
+                'faculty': ["คณะเกษตรศาสตร์ ทรัพยากรธรรมชาติและสิ่งแวดล้อม"],
+                'curriculum': [
+                    "วิทยาศาสตร์การเกษตร", 
+                    "วิทยาศาสตร์และเทคโนโลยีการอาหาร (แผน 1 : สหกิจศึกษา)",
+                    "วิทยาศาสตร์การประมง", 
+                    "เกษตรแม่นยำ", 
+                    "ทรัพยากรธรรมชาติและสิ่งแวดล้อม", 
+                    "ภูมิศาสตร์", 
+                    "เทคโนโลยีชีวภาพทางการเกษตร", 
+                    "สัตวศาสตร์และเทคโนโลยีอาหารสัตว์"
+                ], 
+                'province': [
+                    "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", 
+                    "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", 
+                    "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", 
+                    "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม", 
+                    "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส", 
+                    "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์", 
+                    "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", 
+                    "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", 
+                    "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", 
+                    "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", 
+                    "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", 
+                    "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", 
+                    "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", 
+                    "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", 
+                    "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", 
+                    "อุทัยธานี", "อุบลราชธานี"
+                ]
+            };
+            
+            // ส่งข้อความไปยัง search.html
+            setTimeout(() => {
+                const iframe = document.getElementById('iframeMenu');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ 
+                        type: 'initData', 
+                        uniqueData: uniqueData,
+                        // NEW: ส่งข้อมูล Autocomplete ไปพร้อมกับ initData
+                        autocompleteData: autocompleteData 
+                    }, '*');
+                }
+            }, 500); 
+        }
+
+        /**
+         * ฟังก์ชันหลัก: ดึงค่าตัวกรองทั้งหมดจาก search.html แล้วโหลด GeoJSON
+         */
+        function searchStudent() { 
+            const iframeMenu = document.getElementById('iframeMenu');
+            if (!iframeMenu || !iframeMenu.contentWindow) return;
+            
+            const searchInput = iframeMenu.contentWindow.document.getElementById('searchInput').value;
+            const primaryValue = iframeMenu.contentWindow.document.getElementById('primaryValue').value;
+            const areaValue = iframeMenu.contentWindow.document.getElementById('areaValue').value;
+
+            let searchTerms = [];
+            if (searchInput.trim() !== '') searchTerms.push(searchInput.trim());
+            if (primaryValue.trim() !== '') searchTerms.push(primaryValue.trim());
+            if (areaValue.trim() !== '') searchTerms.push(areaValue.trim());
+
+            const keyword = searchTerms.join(' ');
+
+            let url = `agi65.php?type=keyword&value=${encodeURIComponent(keyword)}`;
+            loadGeoJSON(url);
+
+            iframeMenu.contentWindow.postMessage({ 
+                type: 'updateCount', 
+                count: 'กำลังค้นหา...' 
+            }, '*');
+        }
+
+        /**
+         * ฟังก์ชันรีเซต
+         */
+        function resetFilters() {
+            loadGeoJSON("agi65.php?type=initial"); 
+            
+            const iframeMenu = document.getElementById('iframeMenu');
+            if (iframeMenu && iframeMenu.contentWindow) {
+                iframeMenu.contentWindow.postMessage({ type: 'resetForm' }, '*');
+            }
+        }
+        
+        // ******* ส่วนการสื่อสารข้ามเฟรม และการเริ่มต้น (Initialization) *******
+
+        // Listener สำหรับรับข้อความจาก iframeMenu (เพื่อให้ search/reset ทำงาน)
+        window.addEventListener("message", (event) => {
+            if (event.data.action === 'search') {
+                searchStudent();
+            } else if (event.data.action === 'reset') {
+                resetFilters();
+            }
+        });
+        
+        // โหลดข้อมูลเริ่มต้น
+        fetchUniqueValues();
+        loadGeoJSON("agi65.php?type=initial");
+    </script>
+</body>
+</html>
